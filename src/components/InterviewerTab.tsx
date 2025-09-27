@@ -5,6 +5,19 @@ import { RootState } from '../store';
 import { setSelectedCandidate, setSearchTerm, setSortBy, setSortOrder } from '../store/slices/uiSlice';
 import { Candidate } from '../types';
 
+const getStatusColor = (status: Candidate['status']) => {
+  switch (status) {
+    case 'completed':
+      return 'text-green-600 bg-green-100';
+    case 'in-progress':
+      return 'text-blue-600 bg-blue-100';
+    case 'paused':
+      return 'text-amber-600 bg-amber-100';
+    default:
+      return 'text-gray-600 bg-gray-100';
+  }
+};
+
 const InterviewerTab: React.FC = () => {
   const dispatch = useDispatch();
   const candidates = useSelector((state: RootState) => state.candidates.candidates);
@@ -40,19 +53,6 @@ const InterviewerTab: React.FC = () => {
     } else {
       dispatch(setSortBy(field));
       dispatch(setSortOrder('desc'));
-    }
-  };
-
-  const getStatusColor = (status: Candidate['status']) => {
-    switch (status) {
-      case 'completed':
-        return 'text-green-600 bg-green-100';
-      case 'in-progress':
-        return 'text-blue-600 bg-blue-100';
-      case 'paused':
-        return 'text-amber-600 bg-amber-100';
-      default:
-        return 'text-gray-600 bg-gray-100';
     }
   };
 
