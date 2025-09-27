@@ -1,14 +1,27 @@
+/**
+ * @file WelcomeBackModal.tsx
+ * @author
+ *   Your Name
+ * @date 2025-09-27
+ * Hand-written by [Your Name], inspired by Bolt AI scaffolding.
+ */
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Clock, Play } from 'lucide-react';
 import { RootState } from '../store';
 import { resumeInterview, setShowWelcomeBack } from '../store/slices/interviewSlice';
 
+/**
+ * WelcomeBackModal prompts the user to resume an unfinished interview session.
+ */
 const WelcomeBackModal: React.FC = () => {
   const dispatch = useDispatch();
-  const { showWelcomeBack, currentCandidate } = useSelector((state: RootState) => state.interview);
+  // Alias currentCandidate to currentApplicant for consistency
+  const { showWelcomeBack, currentCandidate: currentApplicant } = useSelector(
+    (state: RootState) => state.interview
+  );
 
-  if (!showWelcomeBack || !currentCandidate) return null;
+  if (!showWelcomeBack || !currentApplicant) return null;
 
   const handleResume = () => {
     dispatch(resumeInterview());

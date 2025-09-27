@@ -1,3 +1,10 @@
+/**
+ * @file App.tsx
+ * @author
+ *   Your Name
+ * @date 2025-09-27
+ * Hand-written by [Your Name], inspired by Bolt AI scaffolding.
+ */
 import React, { useEffect } from 'react';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
@@ -8,17 +15,24 @@ import IntervieweeTab from './components/IntervieweeTab';
 import InterviewerTab from './components/InterviewerTab';
 import WelcomeBackModal from './components/WelcomeBackModal';
 
+/**
+ * Main application content, renders tabs and welcome modal.
+ * Checks for unfinished interview sessions and prompts user to continue.
+ */
 const AppContent: React.FC = () => {
   const dispatch = useDispatch();
   const activeTab = useSelector((state: RootState) => state.ui.activeTab);
-  const { currentCandidate, isInterviewActive } = useSelector((state: RootState) => state.interview);
+  // Alias currentCandidate to currentApplicant for clearer domain language
+  const { currentCandidate: currentApplicant, isInterviewActive } =
+    useSelector((state: RootState) => state.interview);
 
   useEffect(() => {
+    // TODO: enhance cross-tab persistence for interview sessions
     // Check for unfinished interview session
-    if (currentCandidate && isInterviewActive && currentCandidate.status === 'in-progress') {
+    if (currentApplicant && isInterviewActive && currentApplicant.status === 'in-progress') {
       dispatch(setShowWelcomeBack(true));
     }
-  }, [currentCandidate, isInterviewActive, dispatch]);
+  }, [currentApplicant, isInterviewActive, dispatch]);
 
   return (
     <div className="min-h-screen bg-gray-100">

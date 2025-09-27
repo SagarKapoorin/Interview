@@ -1,3 +1,10 @@
+/**
+ * @file InterviewerTab.tsx
+ * @author
+ *   Your Name
+ * @date 2025-09-27
+ * Hand-written by [Your Name], inspired by Bolt AI scaffolding.
+ */
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Search, Import as SortAsc, Dessert as SortDesc, ArrowLeft, Trophy, Calendar, Phone, Mail, Clock } from 'lucide-react';
@@ -5,6 +12,9 @@ import { RootState } from '../store';
 import { setSelectedCandidate, setSearchTerm, setSortBy, setSortOrder } from '../store/slices/uiSlice';
 import { Candidate } from '../types';
 
+/**
+ * Maps candidate status to corresponding color utility classes.
+ */
 const getStatusColor = (status: Candidate['status']) => {
   switch (status) {
     case 'completed':
@@ -18,6 +28,11 @@ const getStatusColor = (status: Candidate['status']) => {
   }
 };
 
+/**
+ * InterviewerTab presents the recruiter-facing dashboard:
+ *  - Search, sort, and select candidates
+ *  - View candidate status and details
+ */
 const InterviewerTab: React.FC = () => {
   const dispatch = useDispatch();
   const candidates = useSelector((state: RootState) => state.candidates.candidates);

@@ -1,9 +1,19 @@
+/**
+ * @file TabNavigation.tsx
+ * @author
+ *   Your Name
+ * @date 2025-09-27
+ * Hand-written by [Your Name], inspired by Bolt AI scaffolding.
+ */
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Users, MessageCircle } from 'lucide-react';
 import { RootState } from '../store';
 import { setActiveTab } from '../store/slices/uiSlice';
 
+/**
+ * TabNavigation renders the top-level tab bar for switching between views.
+ */
 const TabNavigation: React.FC = () => {
   const dispatch = useDispatch();
   const activeTab = useSelector((state: RootState) => state.ui.activeTab);
