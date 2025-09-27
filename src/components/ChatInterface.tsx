@@ -1,15 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { Send, Clock, Bot, User } from 'lucide-react';
 import { RootState } from '../store';
 import { useTimer } from '../hooks/useTimer';
+import { updateTimeRemaining } from '../store/slices/interviewSlice';
 
 interface ChatInterfaceProps {
   onAnswerSubmit: (answer: string, timeSpent: number) => void;
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
-  const { currentCandidate, currentQuestion, isPaused } = useSelector((state: RootState) => state.interview);
+  const dispatch = useDispatch();
+  const { currentCandidate, currentQuestion, isPaused, timeRemaining: storedTime } =
+    useSelector((state: RootState) => state.interview);
   const [currentAnswer, setCurrentAnswer] = useState('');
   const [chatHistory, setChatHistory] = useState<Array<{ type: 'bot' | 'user'; message: string; timestamp: Date }>>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -25,11 +28,23 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
     }
   };
 
+  // Initialize timer from persisted state or question limit
+  const initialTime = currentQuestion
+    ? storedTime > 0
+      ? storedTime
+      : currentQuestion.timeLimit
+    : 0;
   const { timeRemaining } = useTimer(
-    currentQuestion?.timeLimit || 0,
+    initialTime,
     handleTimeout,
     !isPaused && !!currentQuestion
   );
+  // persist the remaining time to Redux on every tick
+  useEffect(() => {
+    if (currentQuestion) {
+      dispatch(updateTimeRemaining(timeRemaining));
+    }
+  }, [timeRemaining, currentQuestion, dispatch]);
 
   useEffect(() => {
     if (currentQuestion) {
@@ -71,6 +86,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
     return 'text-green-500';
   };
 
+  // Persist timer on each tick
+  useEffect(() => {
+    if (currentQuestion) {
+      dispatch({ type: 'interview/updateTimeRemaining', payload: timeRemaining });
+    }
+  }, [timeRemaining, currentQuestion, dispatch]);
+  
   return (
     <div className="bg-white rounded-lg shadow-lg flex flex-col h-[600px]">
       {/* Header */}

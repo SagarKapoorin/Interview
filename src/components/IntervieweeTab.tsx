@@ -1,10 +1,3 @@
-/**
- * @file IntervieweeTab.tsx
- * @author
- *   Your Name
- * @date 2025-09-27
- * Hand-written by [Your Name], inspired by Bolt AI scaffolding.
- */
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { v4 as uuidv4 } from 'uuid';
@@ -17,15 +10,8 @@ import ChatInterface from './ChatInterface';
 import InterviewProgress from './InterviewProgress';
 import { Candidate, Question } from '../types';
 
-/**
- * IntervieweeTab presents the candidate-facing flow:
- *  - Resume upload
- *  - Profile completion
- *  - Live Q&A via chat interface
- */
 const IntervieweeTab: React.FC = () => {
   const dispatch = useDispatch();
-  // Alias currentCandidate to currentApplicant for clearer domain context
   const { currentCandidate: currentApplicant, isInterviewActive } =
     useSelector((state: RootState) => state.interview);
   const [step, setStep] = useState<'upload' | 'profile' | 'interview'>('upload');
@@ -33,15 +19,14 @@ const IntervieweeTab: React.FC = () => {
   const [missingFields, setMissingFields] = useState<string[]>([]);
 
   useEffect(() => {
-    // FIXME: handle aiService errors gracefully
-    if (currentCandidate && currentCandidate.status === 'in-progress' && questions.length === 0) {
+    if (currentApplicant && currentApplicant.status === 'in-progress' && questions.length === 0) {
       const generatedQuestions = aiService.generateQuestions();
       setQuestions(generatedQuestions);
-      if (currentCandidate.currentQuestionIndex < generatedQuestions.length) {
-        dispatch(setCurrentQuestion(generatedQuestions[currentCandidate.currentQuestionIndex]));
+      if (currentApplicant.currentQuestionIndex < generatedQuestions.length) {
+        dispatch(setCurrentQuestion(generatedQuestions[currentApplicant.currentQuestionIndex]));
       }
     }
-  }, [currentCandidate, dispatch, questions.length]);
+  }, [currentApplicant, dispatch, questions.length]);
 
   const handleResumeUpload = (data: { name?: string; email?: string; phone?: string; text: string }) => {
     const missing = [];
@@ -76,9 +61,9 @@ const IntervieweeTab: React.FC = () => {
   };
 
   const handleProfileComplete = (profileData: { name: string; email: string; phone: string }) => {
-    if (currentCandidate) {
-      const updatedCandidate = { ...currentCandidate, ...profileData };
-      dispatch(updateCandidate({ id: currentCandidate.id, ...profileData }));
+    if (currentApplicant) {
+      const updatedCandidate = { ...currentApplicant, ...profileData };
+      dispatch(updateCandidate({ id: currentApplicant.id, ...profileData }));
       dispatch(updateCurrentCandidate(profileData));
       startInterviewProcess(updatedCandidate);
     }
@@ -93,9 +78,9 @@ const IntervieweeTab: React.FC = () => {
   };
 
   const handleAnswerSubmit = (answer: string, timeSpent: number) => {
-    if (!currentCandidate || !questions[currentCandidate.currentQuestionIndex]) return;
+    if (!currentApplicant || !questions[currentApplicant.currentQuestionIndex]) return;
 
-    const currentQuestion = questions[currentCandidate.currentQuestionIndex];
+    const currentQuestion = questions[currentApplicant.currentQuestionIndex];
     const { score, feedback } = aiService.scoreAnswer(currentQuestion, answer, timeSpent);
 
     const answerData = {
@@ -109,29 +94,29 @@ const IntervieweeTab: React.FC = () => {
       feedback
     };
 
-    dispatch(addAnswer({ candidateId: currentCandidate.id, answer: answerData }));
+    dispatch(addAnswer({ candidateId: currentApplicant.id, answer: answerData }));
 
-    const nextQuestionIndex = currentCandidate.currentQuestionIndex + 1;
+    const nextQuestionIndex = currentApplicant.currentQuestionIndex + 1;
     
     if (nextQuestionIndex < questions.length) {
       // Move to next question
       dispatch(updateCandidate({ 
-        id: currentCandidate.id, 
+        id: currentApplicant.id, 
         currentQuestionIndex: nextQuestionIndex,
-        totalTimeSpent: currentCandidate.totalTimeSpent + timeSpent
+        totalTimeSpent: currentApplicant.totalTimeSpent + timeSpent
       }));
       dispatch(updateCurrentCandidate({ 
         currentQuestionIndex: nextQuestionIndex,
-        totalTimeSpent: currentCandidate.totalTimeSpent + timeSpent
+        totalTimeSpent: currentApplicant.totalTimeSpent + timeSpent
       }));
       dispatch(setCurrentQuestion(questions[nextQuestionIndex]));
     } else {
       // Complete interview
-      const allAnswers = [...currentCandidate.answers, answerData];
+      const allAnswers = [...currentApplicant.answers, answerData];
       const { score: finalScore, summary } = aiService.generateSummary(allAnswers);
       
       dispatch(completeInterview({ 
-        candidateId: currentCandidate.id, 
+        candidateId: currentApplicant.id, 
         score: finalScore, 
         summary 
       }));
@@ -165,7 +150,7 @@ const IntervieweeTab: React.FC = () => {
           </p>
           <ProfileForm
             missingFields={missingFields}
-            initialData={currentCandidate!}
+            initialData={currentApplicant!}
             onComplete={handleProfileComplete}
           />
         </div>

@@ -34,24 +34,13 @@ export class ResumeParser {
     const phone = text.match(phoneRegex)?.[0];
     const name = text.match(nameRegex)?.[0] || this.extractNameFromFilename(filename);
 
-    // For demo purposes, provide some mock data if fields are missing
-    const mockData = {
-      name: name || 'John Doe',
-      email: email || 'john.doe@example.com',
-      phone: phone || '+1-555-123-4567',
-      text: text || `Sample resume content for ${name || 'John Doe'}. 
-      
-      Skills: React, Node.js, JavaScript, TypeScript, MongoDB, Express.js
-      
-      Experience:
-      - Full Stack Developer at Tech Corp (2022-Present)
-      - Frontend Developer at StartupXYZ (2020-2022)
-      
-      Education:
-      - Bachelor of Science in Computer Science`
+    // Return raw extracted fields; missing values will be prompted later
+    return {
+      name: name || undefined,
+      email: email || undefined,
+      phone: phone || undefined,
+      text: text
     };
-
-    return mockData;
   }
 
   private extractNameFromFilename(filename: string): string {

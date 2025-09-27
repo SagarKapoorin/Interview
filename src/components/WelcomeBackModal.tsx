@@ -1,22 +1,11 @@
-/**
- * @file WelcomeBackModal.tsx
- * @author
- *   Your Name
- * @date 2025-09-27
- * Hand-written by [Your Name], inspired by Bolt AI scaffolding.
- */
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Clock, Play } from 'lucide-react';
 import { RootState } from '../store';
-import { resumeInterview, setShowWelcomeBack } from '../store/slices/interviewSlice';
+import { resumeInterview, setShowWelcomeBack, endInterview } from '../store/slices/interviewSlice';
 
-/**
- * WelcomeBackModal prompts the user to resume an unfinished interview session.
- */
 const WelcomeBackModal: React.FC = () => {
   const dispatch = useDispatch();
-  // Alias currentCandidate to currentApplicant for consistency
   const { showWelcomeBack, currentCandidate: currentApplicant } = useSelector(
     (state: RootState) => state.interview
   );
@@ -28,7 +17,8 @@ const WelcomeBackModal: React.FC = () => {
   };
 
   const handleDismiss = () => {
-    dispatch(setShowWelcomeBack(false));
+    // End the previous session and start fresh
+    dispatch(endInterview());
   };
 
   return (
@@ -44,10 +34,10 @@ const WelcomeBackModal: React.FC = () => {
           </p>
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
             <p className="text-sm text-gray-700">
-              <strong>Candidate:</strong> {currentCandidate.name}
+              <strong>Candidate:</strong> {currentApplicant.name}
             </p>
             <p className="text-sm text-gray-700">
-              <strong>Progress:</strong> Question {currentCandidate.currentQuestionIndex + 1} of 6
+              <strong>Progress:</strong> Question {currentApplicant.currentQuestionIndex + 1} of 6
             </p>
           </div>
           <div className="flex space-x-3">
