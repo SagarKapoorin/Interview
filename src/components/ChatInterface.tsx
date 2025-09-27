@@ -15,30 +15,47 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
     useSelector((state: RootState) => state.interview);
   const [currentAnswer, setCurrentAnswer] = useState('');
   const [chatHistory, setChatHistory] = useState<Array<{ type: 'bot' | 'user'; message: string; timestamp: Date }>>([]);
+  const [timeoutTriggered, setTimeoutTriggered] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const prevQuestionId = useRef<string | null>(null);
 
   const handleTimeout = () => {
-    if (currentQuestion) {
+    setTimeoutTriggered(true);
+  };
+
+  useEffect(() => {
+    if (timeoutTriggered && currentQuestion) {
       const timeSpent = currentQuestion.timeLimit;
       onAnswerSubmit(currentAnswer || 'No answer provided', timeSpent);
       setCurrentAnswer('');
-      setChatHistory(prev => [...prev, 
+      setChatHistory(prev => [
+        ...prev,
         { type: 'user', message: currentAnswer || 'No answer provided', timestamp: new Date() }
       ]);
+      reset(currentQuestion.timeLimit); // Reset timer for next question
+      setTimeoutTriggered(false);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeoutTriggered]);
 
-  // Initialize timer from persisted state or question limit
   const initialTime = currentQuestion
     ? storedTime > 0
       ? storedTime
       : currentQuestion.timeLimit
     : 0;
-  const { timeRemaining } = useTimer(
+  const { timeRemaining, reset } = useTimer(
     initialTime,
     handleTimeout,
     !isPaused && !!currentQuestion
   );
+
+  useEffect(() => {
+    if (currentQuestion && currentQuestion.id !== prevQuestionId.current) {
+      reset(currentQuestion.timeLimit);
+      prevQuestionId.current = currentQuestion.id;
+    }
+  }, [currentQuestion, reset]);
+
   // persist the remaining time to Redux on every tick
   useEffect(() => {
     if (currentQuestion) {
@@ -46,13 +63,38 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
     }
   }, [timeRemaining, currentQuestion, dispatch]);
 
+  // Add bot message for new question, and clear chat history if it's the first question
   useEffect(() => {
     if (currentQuestion) {
-      setChatHistory(prev => [...prev, {
-        type: 'bot',
-        message: `**Question ${(currentCandidate?.currentQuestionIndex || 0) + 1} (${currentQuestion.difficulty})**\n\n${currentQuestion.question}`,
-        timestamp: new Date()
-      }]);
+      if ((currentCandidate?.currentQuestionIndex ?? 0) === 0) {
+        setChatHistory([
+          {
+            type: 'bot',
+            message: `**Question 1 (${currentQuestion.difficulty})**\n\n${currentQuestion.question}`,
+            timestamp: new Date()
+          }
+        ]);
+      } else {
+        // For subsequent questions, only add if not already present
+        setChatHistory(prev => {
+          const botMessages = prev.filter(m => m.type === 'bot');
+          const lastBotMsg = botMessages.length > 0 ? botMessages[botMessages.length - 1] : undefined;
+          if (
+            !lastBotMsg ||
+            !lastBotMsg.message.includes(currentQuestion.question)
+          ) {
+            return [
+              ...prev,
+              {
+                type: 'bot',
+                message: `**Question ${(currentCandidate?.currentQuestionIndex || 0) + 1} (${currentQuestion.difficulty})**\n\n${currentQuestion.question}`,
+                timestamp: new Date()
+              }
+            ];
+          }
+          return prev;
+        });
+      }
     }
   }, [currentQuestion, currentCandidate?.currentQuestionIndex]);
 
@@ -71,6 +113,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
       }]);
       onAnswerSubmit(currentAnswer, timeSpent);
       setCurrentAnswer('');
+      reset(currentQuestion.timeLimit); 
     }
   };
 
@@ -95,7 +138,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
   
   return (
     <div className="bg-white rounded-lg shadow-lg flex flex-col h-[600px]">
-      {/* Header */}
       <div className="border-b border-gray-200 p-4 flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
@@ -114,7 +156,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
         )}
       </div>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {chatHistory.length === 0 && (
           <div className="flex items-center space-x-3">
@@ -164,7 +205,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
       {currentQuestion && (
         <form onSubmit={handleSubmit} className="border-t border-gray-200 p-4">
           <div className="flex space-x-3">

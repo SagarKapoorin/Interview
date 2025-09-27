@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 export const useTimer = (
   initialTime: number,
@@ -37,9 +37,9 @@ export const useTimer = (
     };
   }, [isActive, timeRemaining, onTimeout]);
 
-  const reset = (newTime?: number) => {
-    setTimeRemaining(newTime || initialTime);
-  };
+  const reset = useCallback((newTime?: number) => {
+    setTimeRemaining(newTime !== undefined ? newTime : initialTime);
+  }, [initialTime]);
 
   const pause = () => {
     if (intervalRef.current) {
