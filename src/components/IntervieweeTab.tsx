@@ -1,3 +1,10 @@
+/**
+ * @file IntervieweeTab.tsx
+ * @author
+ *   Your Name
+ * @date 2025-09-27
+ * Hand-written by [Your Name], inspired by Bolt AI scaffolding.
+ */
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { v4 as uuidv4 } from 'uuid';
@@ -10,14 +17,23 @@ import ChatInterface from './ChatInterface';
 import InterviewProgress from './InterviewProgress';
 import { Candidate, Question } from '../types';
 
+/**
+ * IntervieweeTab presents the candidate-facing flow:
+ *  - Resume upload
+ *  - Profile completion
+ *  - Live Q&A via chat interface
+ */
 const IntervieweeTab: React.FC = () => {
   const dispatch = useDispatch();
-  const { currentCandidate, isInterviewActive } = useSelector((state: RootState) => state.interview);
+  // Alias currentCandidate to currentApplicant for clearer domain context
+  const { currentCandidate: currentApplicant, isInterviewActive } =
+    useSelector((state: RootState) => state.interview);
   const [step, setStep] = useState<'upload' | 'profile' | 'interview'>('upload');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [missingFields, setMissingFields] = useState<string[]>([]);
 
   useEffect(() => {
+    // FIXME: handle aiService errors gracefully
     if (currentCandidate && currentCandidate.status === 'in-progress' && questions.length === 0) {
       const generatedQuestions = aiService.generateQuestions();
       setQuestions(generatedQuestions);
