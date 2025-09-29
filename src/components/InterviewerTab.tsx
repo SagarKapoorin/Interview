@@ -189,15 +189,17 @@ const InterviewerTab: React.FC = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className={`text-2xl font-bold ${getScoreColor(Math.round(
-            candidate.answers.reduce((sum, answer) => sum + answer.score, 0) /
-              candidate.answers.length,
-          ))}`}>
-                       {Math.round(
-            candidate.answers.reduce((sum, answer) => sum + answer.score, 0) /
-              candidate.answers.length,
-          )}%
-                    </div>
+                  {(() => {
+                    const count = candidate.answers.length;
+                    const avg = count > 0
+                      ? Math.round(
+                          candidate.answers.reduce((sum, a) => sum + a.score, 0) / count
+                        )
+                      : 0;
+                    return (
+                      <div className={`text-2xl font-bold ${getScoreColor(avg)}`}>{avg}%</div>
+                    );
+                  })()}
                     <div className="text-sm text-gray-500">
                       {candidate.answers.length}/6 questions
                     </div>

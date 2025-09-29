@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { v4 as uuidv4 } from 'uuid';
 import { RootState } from '../store';
@@ -13,6 +13,7 @@ import {
   setCurrentQuestion,
   endInterview,
   updateCurrentCandidate,
+  setQuestions as setInterviewQuestions,
 } from '../store/slices/interviewSlice';
 import { aiService } from '../services/aiService';
 import ResumeUpload from './ResumeUpload';
@@ -22,28 +23,14 @@ import { Candidate, Question } from '../types';
 
 const IntervieweeTab: React.FC = () => {
   const dispatch = useDispatch();
-  const { currentCandidate: currentApplicant } = useSelector(
+  const { currentCandidate: currentApplicant, questions: reduxQuestions } = useSelector(
     (state: RootState) => state.interview,
   );
   const [step, setStep] = useState<'upload' | 'profile' | 'interview'>('upload');
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [isScoring, setIsScoring] = useState(false);
+  const [questions, setLocalQuestions] = useState<Question[]>([]);
   const [missingFields, setMissingFields] = useState<string[]>([]);
 
-  useEffect(() => {
-    if (
-      currentApplicant &&
-      currentApplicant.status === 'in-progress' &&
-      questions.length === 0 &&
-      currentApplicant.resumeText
-    ) {
-      aiService.generateQuestions(currentApplicant.resumeText).then((generatedQuestions) => {
-        setQuestions(generatedQuestions);
-        if (currentApplicant.currentQuestionIndex < generatedQuestions.length) {
-          dispatch(setCurrentQuestion(generatedQuestions[currentApplicant.currentQuestionIndex]));
-        }
-      });
-    }
-  }, [currentApplicant, dispatch, questions.length]);
 
   const handleResumeUpload = (data: {
     name?: string;
@@ -93,17 +80,23 @@ const IntervieweeTab: React.FC = () => {
 
   const startInterviewProcess = async (candidate: Candidate) => {
     const generatedQuestions = await aiService.generateQuestions(candidate.resumeText || '');
-    setQuestions(generatedQuestions);
+    // Store questions both in Redux and local state
+    setLocalQuestions(generatedQuestions);
+    dispatch(setInterviewQuestions(generatedQuestions));
     dispatch(updateCandidate({ id: candidate.id, status: 'in-progress' }));
     dispatch(setCurrentQuestion(generatedQuestions[0]));
     setStep('interview');
   };
 
   const handleAnswerSubmit = async (answer: string, timeSpent: number) => {
-    if (!currentApplicant || !questions[currentApplicant.currentQuestionIndex]) return;
+    // Determine current question list: local or from Redux
+    const questionList = questions.length > 0 ? questions : reduxQuestions;
+    if (!currentApplicant || !questionList[currentApplicant.currentQuestionIndex]) return;
+    setIsScoring(true);
 
-    const currentQuestion = questions[currentApplicant.currentQuestionIndex];
+    const currentQuestion = questionList[currentApplicant.currentQuestionIndex];
     const { score, feedback } = await aiService.scoreAnswer(currentQuestion, answer, timeSpent);
+    setIsScoring(false);
 
     const answerData = {
       questionId: currentQuestion.id,
@@ -120,21 +113,25 @@ const IntervieweeTab: React.FC = () => {
 
     const nextQuestionIndex = currentApplicant.currentQuestionIndex + 1;
 
-    if (nextQuestionIndex < questions.length) {
+    // Move to next question if available
+    if (nextQuestionIndex < questionList.length) {
+      const updatedTotalTime = currentApplicant.totalTimeSpent + timeSpent;
+      const updatedAnswers = [...currentApplicant.answers, answerData];
       dispatch(
         updateCandidate({
           id: currentApplicant.id,
           currentQuestionIndex: nextQuestionIndex,
-          totalTimeSpent: currentApplicant.totalTimeSpent + timeSpent,
+          totalTimeSpent: updatedTotalTime,
         }),
       );
       dispatch(
         updateCurrentCandidate({
           currentQuestionIndex: nextQuestionIndex,
-          totalTimeSpent: currentApplicant.totalTimeSpent + timeSpent,
+          totalTimeSpent: updatedTotalTime,
+          answers: updatedAnswers,
         }),
       );
-      dispatch(setCurrentQuestion(questions[nextQuestionIndex]));
+      dispatch(setCurrentQuestion(questionList[nextQuestionIndex]));
     } else {
       // Complete interview
       const allAnswers = [...currentApplicant.answers, answerData];
@@ -149,7 +146,7 @@ const IntervieweeTab: React.FC = () => {
       );
       dispatch(endInterview());
       setStep('upload');
-      setQuestions([]);
+      setLocalQuestions([]);
     }
   };
 
@@ -189,7 +186,7 @@ const IntervieweeTab: React.FC = () => {
     <div className="max-w-4xl mx-auto py-4 px-4">
       <InterviewProgress />
       <div className="mt-6">
-        <ChatInterface onAnswerSubmit={handleAnswerSubmit} />
+        <ChatInterface onAnswerSubmit={handleAnswerSubmit} loading={isScoring} />
       </div>
     </div>
   );

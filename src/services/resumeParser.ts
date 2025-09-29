@@ -21,7 +21,8 @@ export class ResumeParser {
 
   private extractFields(text: string, filename: string): ParsedResumeData {
     const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/;
-    const phoneRegex = /(\+\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/;
+    // More flexible phone regex: matches international formats with 8+ digits
+    const phoneRegex = /(?:\+?\d[\d\s().-]{7,}\d)/;
     const nameRegex = /^([A-Z][a-z]+ [A-Z][a-z]+)/m;
 
     const email = text.match(emailRegex)?.[0];

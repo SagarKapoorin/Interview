@@ -7,9 +7,10 @@ import { updateTimeRemaining } from '../store/slices/interviewSlice';
 
 interface ChatInterfaceProps {
   onAnswerSubmit: (answer: string, timeSpent: number) => void;
+  loading?: boolean;
 }
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit, loading = false }) => {
   const dispatch = useDispatch();
   const {
     currentCandidate,
@@ -49,10 +50,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
       ? storedTime
       : currentQuestion.timeLimit
     : 0;
+  // Pause the timer while waiting for answer scoring
   const { timeRemaining, reset } = useTimer(
     initialTime,
     handleTimeout,
-    !isPaused && !!currentQuestion,
+    !isPaused && !!currentQuestion && !loading,
   );
 
   useEffect(() => {
@@ -106,7 +108,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (currentAnswer.trim() && currentQuestion) {
+    if (!loading && currentAnswer.trim() && currentQuestion) {
       const timeSpent = currentQuestion.timeLimit - timeRemaining;
       setChatHistory((prev) => [
         ...prev,
@@ -224,19 +226,25 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
           <div className="flex space-x-3">
             <textarea
               value={currentAnswer}
-              onChange={(e) => setCurrentAnswer(e.target.value)}
-              placeholder="Type your answer here..."
+              onChange={(e) => !loading && setCurrentAnswer(e.target.value)}
+              placeholder={loading ? 'Checking Answer...' : 'Type your answer here...'}
               className="flex-1 resize-none border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               rows={3}
-              disabled={isPaused}
+              disabled={loading || isPaused}
             />
             <button
               type="submit"
-              disabled={!currentAnswer.trim() || isPaused}
+              disabled={loading || !currentAnswer.trim() || isPaused}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
             >
-              <Send size={16} />
-              <span>Submit</span>
+              {loading ? (
+                <span>Checking Answer...</span>
+              ) : (
+                <>
+                  <Send size={16} />
+                  <span>Submit</span>
+                </>
+              )}
             </button>
           </div>
         </form>

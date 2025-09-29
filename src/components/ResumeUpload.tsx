@@ -9,6 +9,7 @@ interface ResumeUploadProps {
 
 const ResumeUpload: React.FC<ResumeUploadProps> = ({ onFileUploaded }) => {
   const [error, setError] = useState<string | null>(null);
+  const [isParsing, setIsParsing] = useState(false);
 
   const onDrop = useCallback(
     async (acceptedFiles: File[], fileRejections: FileRejection[]) => {
@@ -24,6 +25,7 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({ onFileUploaded }) => {
       }
       const file = acceptedFiles[0];
       if (file) {
+        setIsParsing(true);
         try {
           const parsedData = await resumeParser.parseFile(file);
           if (!parsedData.text || parsedData.text.trim().length === 0) {
@@ -32,7 +34,12 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({ onFileUploaded }) => {
           }
           onFileUploaded(parsedData);
         } catch (err: unknown) {
-          if (err && typeof err === 'object' && 'name' in (err as Record<string, unknown>) && (err as { name?: string }).name === 'NotReadableError') {
+          if (
+            err &&
+            typeof err === 'object' &&
+            'name' in (err as Record<string, unknown>) &&
+            (err as { name?: string }).name === 'NotReadableError'
+          ) {
             setError('Could not read the file. Please check your file and try again.');
           } else {
             setError('Resume parsing failed. Please upload a valid PDF or DOCX file.');
@@ -54,6 +61,14 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({ onFileUploaded }) => {
     maxFiles: 1,
     maxSize: 10 * 1024 * 1024, // 10MB
   });
+  // If parsing is in progress, show a loader
+  if (isParsing) {
+    return (
+      <div className="max-w-md mx-auto py-8 text-center">
+        <div className="text-lg text-gray-600">Parsing resume, please wait...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-md mx-auto">
@@ -85,7 +100,6 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({ onFileUploaded }) => {
         <p className="text-sm text-gray-500 mb-4">Drag and drop your resume, or click to browse</p>
         <p className="text-xs text-gray-400">Supports PDF and DOCX files up to 10MB</p>
       </div>
-      {/* Keep fileRejections for fallback */}
       {fileRejections.length > 0 && !error && (
         <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
           <div className="flex">
