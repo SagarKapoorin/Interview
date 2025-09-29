@@ -160,15 +160,15 @@ const InterviewerTab: React.FC = () => {
                     <div className="flex items-center space-x-4 mb-3">
                       <h3 className="text-lg font-semibold text-gray-900">{candidate.name}</h3>
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getStatusColor(candidate.status)}`}
+                        className={`px-2 py-1 rounded-full whitespace-nowrap text-xs font-medium capitalize ${getStatusColor(candidate.status)}`}
                       >
                         {candidate.status}
                       </span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center whitespace-nowrap space-x-2">
                         <Mail size={14} />
-                        <span>{candidate.email}</span>
+                        <span className='text-xs'> {candidate.email}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Phone size={14} />
