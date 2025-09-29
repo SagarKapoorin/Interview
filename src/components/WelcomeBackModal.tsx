@@ -2,7 +2,7 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Clock, Play } from 'lucide-react';
 import { RootState } from '../store';
-import { resumeInterview, setShowWelcomeBack, endInterview } from '../store/slices/interviewSlice';
+import { resumeInterview, endInterview } from '../store/slices/interviewSlice';
 
 const WelcomeBackModal: React.FC = () => {
   const dispatch = useDispatch();
@@ -17,7 +17,7 @@ const WelcomeBackModal: React.FC = () => {
   };
 
   const handleDismiss = () => {
-    // End the previous session and start fresh
+    //end the previous session and start fresh
     dispatch(endInterview());
   };
 

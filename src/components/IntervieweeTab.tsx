@@ -22,7 +22,7 @@ import { Candidate, Question } from '../types';
 
 const IntervieweeTab: React.FC = () => {
   const dispatch = useDispatch();
-  const { currentCandidate: currentApplicant, isInterviewActive } = useSelector(
+  const { currentCandidate: currentApplicant } = useSelector(
     (state: RootState) => state.interview,
   );
   const [step, setStep] = useState<'upload' | 'profile' | 'interview'>('upload');
@@ -115,7 +115,6 @@ const IntervieweeTab: React.FC = () => {
     const nextQuestionIndex = currentApplicant.currentQuestionIndex + 1;
 
     if (nextQuestionIndex < questions.length) {
-      // Move to next question
       dispatch(
         updateCandidate({
           id: currentApplicant.id,

@@ -15,15 +15,13 @@ const AppContent: React.FC = () => {
   );
 
   useEffect(() => {
-    // Check for unfinished interview session on load
     if (currentApplicant && isInterviewActive && currentApplicant.status === 'in-progress') {
       dispatch(setShowWelcomeBack(true));
     }
   }, [currentApplicant, isInterviewActive, dispatch]);
 
   useEffect(() => {
-    // Pause interview and show modal when user closes or reloads the page
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    const handleBeforeUnload = () => {
       if (currentApplicant && isInterviewActive) {
         dispatch(pauseInterview());
         dispatch(setShowWelcomeBack(true));

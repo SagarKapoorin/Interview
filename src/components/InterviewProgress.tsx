@@ -30,7 +30,6 @@ const InterviewProgress: React.FC = () => {
         {questions.map((question, index) => {
           const isCompleted = index < currentIndex;
           const isCurrent = index === currentIndex;
-          const isPending = index > currentIndex;
 
           return (
             <div key={index} className="flex flex-col items-center">

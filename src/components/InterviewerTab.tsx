@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   Search,
@@ -92,13 +92,11 @@ const InterviewerTab: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-4">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Interview Dashboard</h1>
         <p className="text-gray-600">Manage and review candidate interviews</p>
       </div>
 
-      {/* Search and Filters */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 lg:space-x-4">
           <div className="relative flex-1 max-w-md">
@@ -140,7 +138,6 @@ const InterviewerTab: React.FC = () => {
         </div>
       </div>
 
-      {/* Candidates List */}
       {sortedCandidates.length === 0 ? (
         <div className="bg-white rounded-lg shadow-md p-12 text-center">
           <Trophy className="mx-auto h-12 w-12 text-gray-400 mb-4" />
@@ -237,7 +234,6 @@ interface CandidateDetailViewProps {
 const CandidateDetailView: React.FC<CandidateDetailViewProps> = ({ candidate, onBack }) => {
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
-      {/* Header */}
       <div className="flex items-center space-x-4 mb-6">
         <button
           onClick={onBack}
@@ -251,7 +247,6 @@ const CandidateDetailView: React.FC<CandidateDetailViewProps> = ({ candidate, on
         </div>
       </div>
 
-      {/* Candidate Info */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Candidate Information</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -278,7 +273,6 @@ const CandidateDetailView: React.FC<CandidateDetailViewProps> = ({ candidate, on
         </div>
       </div>
 
-      {/* Score Summary */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Performance Summary</h2>
         <div className="flex items-center justify-between mb-4">
@@ -299,7 +293,6 @@ const CandidateDetailView: React.FC<CandidateDetailViewProps> = ({ candidate, on
         )}
       </div>
 
-      {/* Questions and Answers */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Questions & Answers</h2>
         <div className="space-y-6">

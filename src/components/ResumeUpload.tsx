@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
+import { useDropzone, FileRejection } from 'react-dropzone';
 import { Upload, FileText, AlertCircle } from 'lucide-react';
 import { resumeParser } from '../services/resumeParser';
 
@@ -11,7 +11,7 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({ onFileUploaded }) => {
   const [error, setError] = useState<string | null>(null);
 
   const onDrop = useCallback(
-    async (acceptedFiles: File[], fileRejections: any[]) => {
+    async (acceptedFiles: File[], fileRejections: FileRejection[]) => {
       setError(null);
       if (fileRejections.length > 0) {
         const rejection = fileRejections[0];
@@ -31,8 +31,8 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({ onFileUploaded }) => {
             return;
           }
           onFileUploaded(parsedData);
-        } catch (err: any) {
-          if (err && err.name === 'NotReadableError') {
+        } catch (err: unknown) {
+          if (err && typeof err === 'object' && 'name' in (err as Record<string, unknown>) && (err as { name?: string }).name === 'NotReadableError') {
             setError('Could not read the file. Please check your file and try again.');
           } else {
             setError('Resume parsing failed. Please upload a valid PDF or DOCX file.');
@@ -57,7 +57,6 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({ onFileUploaded }) => {
 
   return (
     <div className="max-w-md mx-auto">
-      {/* Error Banner */}
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center">
           <AlertCircle className="h-5 w-5 text-red-400 mr-2" />

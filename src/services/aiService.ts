@@ -1,9 +1,7 @@
 import { Question, Answer } from '../types';
 
-// Mock AI service - in production, this would connect to actual AI APIs
 export class AIService {
   private questionBank: Omit<Question, 'id'>[] = [
-    // Easy Questions (20s each)
     {
       question: 'What is the difference between let, const, and var in JavaScript?',
       difficulty: 'Easy',
@@ -26,7 +24,6 @@ export class AIService {
         'package.json contains project metadata, dependencies, and scripts for the project.',
     },
 
-    // Medium Questions (60s each)
     {
       question: 'Explain the concept of React Hooks and give examples of built-in hooks.',
       difficulty: 'Medium',
@@ -49,7 +46,6 @@ export class AIService {
         'SQL databases are relational (PostgreSQL, MySQL). NoSQL are non-relational (MongoDB, Redis). Different use cases.',
     },
 
-    // Hard Questions (120s each)
     {
       question: "Explain React's reconciliation algorithm and how virtual DOM works.",
       difficulty: 'Hard',
@@ -93,7 +89,6 @@ export class AIService {
     answer: string,
     timeSpent: number,
   ): { score: number; feedback: string } {
-    // Mock AI scoring logic
     const answerLength = answer.trim().length;
     const timeEfficiency = Math.min(timeSpent / question.timeLimit, 1);
 
@@ -114,7 +109,6 @@ export class AIService {
       feedback = 'Excellent comprehensive answer!';
     }
 
-    // Adjust score based on time efficiency
     const timeBonus = timeEfficiency < 0.5 ? 1 : 0;
     const finalScore = Math.min(baseScore + timeBonus, 10);
 

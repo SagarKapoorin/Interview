@@ -38,7 +38,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
         ...prev,
         { type: 'user', message: currentAnswer || 'No answer provided', timestamp: new Date() },
       ]);
-      reset(currentQuestion.timeLimit); // Reset timer for next question
+      reset(currentQuestion.timeLimit); // reset timer for next question
       setTimeoutTriggered(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -62,14 +62,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
     }
   }, [currentQuestion, reset]);
 
-  // persist the remaining time to Redux on every tick
   useEffect(() => {
     if (currentQuestion) {
       dispatch(updateTimeRemaining(timeRemaining));
     }
   }, [timeRemaining, currentQuestion, dispatch]);
 
-  // Add bot message for new question, and clear chat history if it's the first question
   useEffect(() => {
     if (currentQuestion) {
       if ((currentCandidate?.currentQuestionIndex ?? 0) === 0) {
@@ -136,7 +134,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
     return 'text-green-500';
   };
 
-  // Persist timer on each tick
   useEffect(() => {
     if (currentQuestion) {
       dispatch({ type: 'interview/updateTimeRemaining', payload: timeRemaining });
