@@ -26,7 +26,12 @@ const IntervieweeTab: React.FC = () => {
   const { currentCandidate: currentApplicant, questions: reduxQuestions } = useSelector(
     (state: RootState) => state.interview,
   );
-  const [step, setStep] = useState<'upload' | 'profile' | 'interview'>('upload');
+  // Candidate record from global list for summary and answers
+  const candidateRecord = useSelector((state: RootState) =>
+    state.candidates.candidates.find((c) => c.id === currentApplicant?.id),
+  );
+  // Step: upload profile, profile input, interview in progress, or completion summary
+  const [step, setStep] = useState<'upload' | 'profile' | 'interview' | 'complete'>('upload');
   const [isScoring, setIsScoring] = useState(false);
   const [questions, setLocalQuestions] = useState<Question[]>([]);
   const [missingFields, setMissingFields] = useState<string[]>([]);
@@ -133,23 +138,44 @@ const IntervieweeTab: React.FC = () => {
       );
       dispatch(setCurrentQuestion(questionList[nextQuestionIndex]));
     } else {
-      // Complete interview
+      // Complete interview and prepare summary view
       const allAnswers = [...currentApplicant.answers, answerData];
       const { score: finalScore, summary } = await aiService.generateSummary(allAnswers);
-
       dispatch(
-        completeInterview({
-          candidateId: currentApplicant.id,
-          score: finalScore,
-          summary,
-        }),
+        completeInterview({ candidateId: currentApplicant.id, score: finalScore, summary }),
       );
-      dispatch(endInterview());
-      setStep('upload');
-      setLocalQuestions([]);
+      setStep('complete');
     }
   };
 
+  // Show completion summary once interview is complete
+  if (step === 'complete' && currentApplicant) {
+    // Use stored candidateRecord from Redux for summary and answers
+    const score = candidateRecord?.score ?? 0;
+    const summary = candidateRecord?.summary || '';
+    return (
+      <div className="max-w-4xl mx-auto py-8 px-4 bg-white rounded-lg shadow-md">
+        <h2 className="text-2xl font-bold mb-4">Interview Complete!</h2>
+        <div className="text-xl mb-2">Final Score: {score}%</div>
+        {summary && (
+          <div className="bg-gray-50 p-4 rounded-lg mb-4">
+            <h3 className="font-semibold mb-2">AI Summary</h3>
+            <p className="whitespace-pre-wrap text-gray-700">{summary}</p>
+          </div>
+        )}
+        <button
+          onClick={() => {
+            dispatch(endInterview());
+            setLocalQuestions([]);
+            setStep('upload');
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
+          Done
+        </button>
+      </div>
+    );
+  }
   if (step === 'upload') {
     return (
       <div className="max-w-4xl mx-auto py-8 px-4">
