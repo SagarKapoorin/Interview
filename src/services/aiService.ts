@@ -11,7 +11,8 @@ function truncateText(text: string, maxChars: number = MAX_RESUME_CHARS): string
   return snippet;
 }
 
-const API_BASE = 'http://localhost:5000/api/gemini'; 
+// Base URL for backend API, set via Vite environment variable
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/gemini';
 
 export class AIService {
   async generateQuestions(resumeText: string): Promise<Question[]> {
