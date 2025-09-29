@@ -13,7 +13,7 @@ const initialState: UiState = {
   selectedCandidateId: null,
   searchTerm: '',
   sortBy: 'score',
-  sortOrder: 'desc'
+  sortOrder: 'desc',
 };
 
 const uiSlice = createSlice({
@@ -34,9 +34,10 @@ const uiSlice = createSlice({
     },
     setSortOrder: (state, action: PayloadAction<'asc' | 'desc'>) => {
       state.sortOrder = action.payload;
-    }
-  }
+    },
+  },
 });
 
-export const { setActiveTab, setSelectedCandidate, setSearchTerm, setSortBy, setSortOrder } = uiSlice.actions;
+export const { setActiveTab, setSelectedCandidate, setSearchTerm, setSortBy, setSortOrder } =
+  uiSlice.actions;
 export default uiSlice.reducer;

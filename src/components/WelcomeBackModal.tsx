@@ -7,7 +7,7 @@ import { resumeInterview, setShowWelcomeBack, endInterview } from '../store/slic
 const WelcomeBackModal: React.FC = () => {
   const dispatch = useDispatch();
   const { showWelcomeBack, currentCandidate: currentApplicant } = useSelector(
-    (state: RootState) => state.interview
+    (state: RootState) => state.interview,
   );
 
   if (!showWelcomeBack || !currentApplicant) return null;

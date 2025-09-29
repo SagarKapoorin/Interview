@@ -2,8 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { v4 as uuidv4 } from 'uuid';
 import { RootState } from '../store';
-import { addCandidate, updateCandidate, addAnswer, completeInterview } from '../store/slices/candidatesSlice';
-import { startInterview, setCurrentQuestion, endInterview, updateCurrentCandidate } from '../store/slices/interviewSlice';
+import {
+  addCandidate,
+  updateCandidate,
+  addAnswer,
+  completeInterview,
+} from '../store/slices/candidatesSlice';
+import {
+  startInterview,
+  setCurrentQuestion,
+  endInterview,
+  updateCurrentCandidate,
+} from '../store/slices/interviewSlice';
 import { aiService } from '../services/aiService';
 import ResumeUpload from './ResumeUpload';
 import ChatInterface from './ChatInterface';
@@ -12,8 +22,9 @@ import { Candidate, Question } from '../types';
 
 const IntervieweeTab: React.FC = () => {
   const dispatch = useDispatch();
-  const { currentCandidate: currentApplicant, isInterviewActive } =
-    useSelector((state: RootState) => state.interview);
+  const { currentCandidate: currentApplicant, isInterviewActive } = useSelector(
+    (state: RootState) => state.interview,
+  );
   const [step, setStep] = useState<'upload' | 'profile' | 'interview'>('upload');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [missingFields, setMissingFields] = useState<string[]>([]);
@@ -28,7 +39,12 @@ const IntervieweeTab: React.FC = () => {
     }
   }, [currentApplicant, dispatch, questions.length]);
 
-  const handleResumeUpload = (data: { name?: string; email?: string; phone?: string; text: string }) => {
+  const handleResumeUpload = (data: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    text: string;
+  }) => {
     const missing = [];
     if (!data.name) missing.push('name');
     if (!data.email) missing.push('email');
@@ -46,7 +62,7 @@ const IntervieweeTab: React.FC = () => {
       createdAt: new Date().toISOString(),
       currentQuestionIndex: 0,
       answers: [],
-      totalTimeSpent: 0
+      totalTimeSpent: 0,
     };
 
     dispatch(addCandidate(candidate));
@@ -91,35 +107,41 @@ const IntervieweeTab: React.FC = () => {
       timeLimit: currentQuestion.timeLimit,
       timeSpent,
       score,
-      feedback
+      feedback,
     };
 
     dispatch(addAnswer({ candidateId: currentApplicant.id, answer: answerData }));
 
     const nextQuestionIndex = currentApplicant.currentQuestionIndex + 1;
-    
+
     if (nextQuestionIndex < questions.length) {
       // Move to next question
-      dispatch(updateCandidate({ 
-        id: currentApplicant.id, 
-        currentQuestionIndex: nextQuestionIndex,
-        totalTimeSpent: currentApplicant.totalTimeSpent + timeSpent
-      }));
-      dispatch(updateCurrentCandidate({ 
-        currentQuestionIndex: nextQuestionIndex,
-        totalTimeSpent: currentApplicant.totalTimeSpent + timeSpent
-      }));
+      dispatch(
+        updateCandidate({
+          id: currentApplicant.id,
+          currentQuestionIndex: nextQuestionIndex,
+          totalTimeSpent: currentApplicant.totalTimeSpent + timeSpent,
+        }),
+      );
+      dispatch(
+        updateCurrentCandidate({
+          currentQuestionIndex: nextQuestionIndex,
+          totalTimeSpent: currentApplicant.totalTimeSpent + timeSpent,
+        }),
+      );
       dispatch(setCurrentQuestion(questions[nextQuestionIndex]));
     } else {
       // Complete interview
       const allAnswers = [...currentApplicant.answers, answerData];
       const { score: finalScore, summary } = aiService.generateSummary(allAnswers);
-      
-      dispatch(completeInterview({ 
-        candidateId: currentApplicant.id, 
-        score: finalScore, 
-        summary 
-      }));
+
+      dispatch(
+        completeInterview({
+          candidateId: currentApplicant.id,
+          score: finalScore,
+          summary,
+        }),
+      );
       dispatch(endInterview());
       setStep('upload');
       setQuestions([]);
@@ -162,9 +184,7 @@ const IntervieweeTab: React.FC = () => {
     <div className="max-w-4xl mx-auto py-4 px-4">
       <InterviewProgress />
       <div className="mt-6">
-        <ChatInterface
-          onAnswerSubmit={handleAnswerSubmit}
-        />
+        <ChatInterface onAnswerSubmit={handleAnswerSubmit} />
       </div>
     </div>
   );
@@ -180,12 +200,38 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ missingFields, initialData, o
   const [formData, setFormData] = useState({
     name: initialData.name || '',
     email: initialData.email || '',
-    phone: initialData.phone || ''
+    phone: initialData.phone || '',
   });
+  const [errors, setErrors] = useState<{ name?: string; email?: string; phone?: string }>({});
+
+  const validate = () => {
+    const newErrors: typeof errors = {};
+    if (missingFields.includes('name') && !formData.name.trim()) {
+      newErrors.name = 'Name is required.';
+    }
+    if (missingFields.includes('email')) {
+      if (!formData.email.trim()) {
+        newErrors.email = 'Email is required.';
+      } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/.test(formData.email)) {
+        newErrors.email = 'Invalid email format.';
+      }
+    }
+    if (missingFields.includes('phone')) {
+      if (!formData.phone.trim()) {
+        newErrors.phone = 'Phone number is required.';
+      } else if (!/^\+?\d{10,15}$/.test(formData.phone.replace(/\D/g, ''))) {
+        newErrors.phone = 'Invalid phone number format.';
+      }
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onComplete(formData);
+    if (validate()) {
+      onComplete(formData);
+    }
   };
 
   return (
@@ -198,8 +244,9 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ missingFields, initialData, o
             required
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className={`w-full px-3 py-2 border ${errors.name ? 'border-red-400' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
           />
+          {errors.name && <div className="text-xs text-red-600 mt-1">{errors.name}</div>}
         </div>
       )}
       {missingFields.includes('email') && (
@@ -210,8 +257,9 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ missingFields, initialData, o
             required
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className={`w-full px-3 py-2 border ${errors.email ? 'border-red-400' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
           />
+          {errors.email && <div className="text-xs text-red-600 mt-1">{errors.email}</div>}
         </div>
       )}
       {missingFields.includes('phone') && (
@@ -222,8 +270,9 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ missingFields, initialData, o
             required
             value={formData.phone}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className={`w-full px-3 py-2 border ${errors.phone ? 'border-red-400' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
           />
+          {errors.phone && <div className="text-xs text-red-600 mt-1">{errors.phone}</div>}
         </div>
       )}
       <button

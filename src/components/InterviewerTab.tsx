@@ -1,8 +1,23 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Search, Import as SortAsc, Dessert as SortDesc, ArrowLeft, Trophy, Calendar, Phone, Mail, Clock } from 'lucide-react';
+import {
+  Search,
+  Import as SortAsc,
+  Dessert as SortDesc,
+  ArrowLeft,
+  Trophy,
+  Calendar,
+  Phone,
+  Mail,
+  Clock,
+} from 'lucide-react';
 import { RootState } from '../store';
-import { setSelectedCandidate, setSearchTerm, setSortBy, setSortOrder } from '../store/slices/uiSlice';
+import {
+  setSelectedCandidate,
+  setSearchTerm,
+  setSortBy,
+  setSortOrder,
+} from '../store/slices/uiSlice';
 import { Candidate } from '../types';
 
 const getStatusColor = (status: Candidate['status']) => {
@@ -21,14 +36,17 @@ const getStatusColor = (status: Candidate['status']) => {
 const InterviewerTab: React.FC = () => {
   const dispatch = useDispatch();
   const candidates = useSelector((state: RootState) => state.candidates.candidates);
-  const { selectedCandidateId, searchTerm, sortBy, sortOrder } = useSelector((state: RootState) => state.ui);
+  const { selectedCandidateId, searchTerm, sortBy, sortOrder } = useSelector(
+    (state: RootState) => state.ui,
+  );
 
-  const selectedCandidate = candidates.find(c => c.id === selectedCandidateId);
+  const selectedCandidate = candidates.find((c) => c.id === selectedCandidateId);
 
   // Filter and sort candidates
-  const filteredCandidates = candidates.filter(candidate =>
-    candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    candidate.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredCandidates = candidates.filter(
+    (candidate) =>
+      candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      candidate.email.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const sortedCandidates = [...filteredCandidates].sort((a, b) => {
@@ -64,7 +82,12 @@ const InterviewerTab: React.FC = () => {
   };
 
   if (selectedCandidate) {
-    return <CandidateDetailView candidate={selectedCandidate} onBack={() => dispatch(setSelectedCandidate(null))} />;
+    return (
+      <CandidateDetailView
+        candidate={selectedCandidate}
+        onBack={() => dispatch(setSelectedCandidate(null))}
+      />
+    );
   }
 
   return (
@@ -79,7 +102,10 @@ const InterviewerTab: React.FC = () => {
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 lg:space-x-4">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={20}
+            />
             <input
               type="text"
               placeholder="Search candidates..."
@@ -89,9 +115,27 @@ const InterviewerTab: React.FC = () => {
             />
           </div>
           <div className="flex space-x-2">
-            <SortButton label="Score" field="score" active={sortBy === 'score'} order={sortOrder} onClick={handleSortClick} />
-            <SortButton label="Name" field="name" active={sortBy === 'name'} order={sortOrder} onClick={handleSortClick} />
-            <SortButton label="Date" field="date" active={sortBy === 'date'} order={sortOrder} onClick={handleSortClick} />
+            <SortButton
+              label="Score"
+              field="score"
+              active={sortBy === 'score'}
+              order={sortOrder}
+              onClick={handleSortClick}
+            />
+            <SortButton
+              label="Name"
+              field="name"
+              active={sortBy === 'name'}
+              order={sortOrder}
+              onClick={handleSortClick}
+            />
+            <SortButton
+              label="Date"
+              field="date"
+              active={sortBy === 'date'}
+              order={sortOrder}
+              onClick={handleSortClick}
+            />
           </div>
         </div>
       </div>
@@ -101,7 +145,9 @@ const InterviewerTab: React.FC = () => {
         <div className="bg-white rounded-lg shadow-md p-12 text-center">
           <Trophy className="mx-auto h-12 w-12 text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No candidates yet</h3>
-          <p className="text-gray-500">Candidates will appear here after they complete their interviews.</p>
+          <p className="text-gray-500">
+            Candidates will appear here after they complete their interviews.
+          </p>
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -116,7 +162,9 @@ const InterviewerTab: React.FC = () => {
                   <div className="flex-1">
                     <div className="flex items-center space-x-4 mb-3">
                       <h3 className="text-lg font-semibold text-gray-900">{candidate.name}</h3>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getStatusColor(candidate.status)}`}>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getStatusColor(candidate.status)}`}
+                      >
                         {candidate.status}
                       </span>
                     </div>
@@ -136,7 +184,9 @@ const InterviewerTab: React.FC = () => {
                       {candidate.status === 'completed' && candidate.completedAt && (
                         <div className="flex items-center space-x-2">
                           <Clock size={14} />
-                          <span>Completed {new Date(candidate.completedAt).toLocaleDateString()}</span>
+                          <span>
+                            Completed {new Date(candidate.completedAt).toLocaleDateString()}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -171,9 +221,7 @@ const SortButton: React.FC<SortButtonProps> = ({ label, field, active, order, on
   <button
     onClick={() => onClick(field)}
     className={`flex items-center space-x-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-      active
-        ? 'bg-blue-100 text-blue-700'
-        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+      active ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
     }`}
   >
     <span>{label}</span>
@@ -221,7 +269,9 @@ const CandidateDetailView: React.FC<CandidateDetailViewProps> = ({ candidate, on
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-500 mb-1">Status</label>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getStatusColor(candidate.status)}`}>
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getStatusColor(candidate.status)}`}
+            >
               {candidate.status}
             </span>
           </div>
@@ -261,7 +311,9 @@ const CandidateDetailView: React.FC<CandidateDetailViewProps> = ({ candidate, on
                 </h3>
                 <div className="flex items-center space-x-4 text-sm text-gray-500">
                   <span>{Math.round((answer.score / 10) * 100)}%</span>
-                  <span>{answer.timeSpent}s / {answer.timeLimit}s</span>
+                  <span>
+                    {answer.timeSpent}s / {answer.timeLimit}s
+                  </span>
                 </div>
               </div>
               <p className="text-gray-700 mb-3">{answer.question}</p>

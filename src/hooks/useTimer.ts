@@ -1,10 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 
-export const useTimer = (
-  initialTime: number,
-  onTimeout: () => void,
-  isActive: boolean = true
-) => {
+export const useTimer = (initialTime: number, onTimeout: () => void, isActive: boolean = true) => {
   const [timeRemaining, setTimeRemaining] = useState(initialTime);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -37,9 +33,12 @@ export const useTimer = (
     };
   }, [isActive, timeRemaining, onTimeout]);
 
-  const reset = useCallback((newTime?: number) => {
-    setTimeRemaining(newTime !== undefined ? newTime : initialTime);
-  }, [initialTime]);
+  const reset = useCallback(
+    (newTime?: number) => {
+      setTimeRemaining(newTime !== undefined ? newTime : initialTime);
+    },
+    [initialTime],
+  );
 
   const pause = () => {
     if (intervalRef.current) {

@@ -11,13 +11,13 @@ export class ResumeParser {
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = () => {
-        const text = reader.result as string || '';
-        
+        const text = (reader.result as string) || '';
+
         // Mock parsing logic - in production, use pdf-parse or mammoth libraries
         const parsedData = this.extractFields(text, file.name);
         resolve(parsedData);
       };
-      
+
       // For demonstration, we'll just read as text
       // In production, handle PDF/DOCX properly
       reader.readAsText(file);
@@ -39,7 +39,7 @@ export class ResumeParser {
       name: name || undefined,
       email: email || undefined,
       phone: phone || undefined,
-      text: text
+      text: text,
     };
   }
 
@@ -47,7 +47,7 @@ export class ResumeParser {
     return filename
       .replace(/\.(pdf|docx|doc)$/i, '')
       .replace(/[-_]/g, ' ')
-      .replace(/\b\w/g, l => l.toUpperCase());
+      .replace(/\b\w/g, (l) => l.toUpperCase());
   }
 }
 

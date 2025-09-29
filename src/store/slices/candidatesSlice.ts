@@ -6,7 +6,7 @@ interface CandidatesState {
 }
 
 const initialState: CandidatesState = {
-  candidates: []
+  candidates: [],
 };
 
 const candidatesSlice = createSlice({
@@ -17,28 +17,32 @@ const candidatesSlice = createSlice({
       state.candidates.push(action.payload);
     },
     updateCandidate: (state, action: PayloadAction<Partial<Candidate> & { id: string }>) => {
-      const index = state.candidates.findIndex(c => c.id === action.payload.id);
+      const index = state.candidates.findIndex((c) => c.id === action.payload.id);
       if (index !== -1) {
         state.candidates[index] = { ...state.candidates[index], ...action.payload };
       }
     },
     addAnswer: (state, action: PayloadAction<{ candidateId: string; answer: Answer }>) => {
-      const candidate = state.candidates.find(c => c.id === action.payload.candidateId);
+      const candidate = state.candidates.find((c) => c.id === action.payload.candidateId);
       if (candidate) {
         candidate.answers.push(action.payload.answer);
       }
     },
-    completeInterview: (state, action: PayloadAction<{ candidateId: string; score: number; summary: string }>) => {
-      const candidate = state.candidates.find(c => c.id === action.payload.candidateId);
+    completeInterview: (
+      state,
+      action: PayloadAction<{ candidateId: string; score: number; summary: string }>,
+    ) => {
+      const candidate = state.candidates.find((c) => c.id === action.payload.candidateId);
       if (candidate) {
         candidate.status = 'completed';
         candidate.score = action.payload.score;
         candidate.summary = action.payload.summary;
         candidate.completedAt = new Date().toISOString();
       }
-    }
-  }
+    },
+  },
 });
 
-export const { addCandidate, updateCandidate, addAnswer, completeInterview } = candidatesSlice.actions;
+export const { addCandidate, updateCandidate, addAnswer, completeInterview } =
+  candidatesSlice.actions;
 export default candidatesSlice.reducer;

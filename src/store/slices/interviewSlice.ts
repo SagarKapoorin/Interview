@@ -7,7 +7,7 @@ const initialState: InterviewState = {
   isPaused: false,
   currentQuestion: null,
   timeRemaining: 0,
-  showWelcomeBack: false
+  showWelcomeBack: false,
 };
 
 const interviewSlice = createSlice({
@@ -49,8 +49,8 @@ const interviewSlice = createSlice({
       if (state.currentCandidate) {
         state.currentCandidate = { ...state.currentCandidate, ...action.payload };
       }
-    }
-  }
+    },
+  },
 });
 
 export const {
@@ -61,6 +61,6 @@ export const {
   setCurrentQuestion,
   updateTimeRemaining,
   setShowWelcomeBack,
-  updateCurrentCandidate
+  updateCurrentCandidate,
 } = interviewSlice.actions;
 export default interviewSlice.reducer;

@@ -11,10 +11,16 @@ interface ChatInterfaceProps {
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
   const dispatch = useDispatch();
-  const { currentCandidate, currentQuestion, isPaused, timeRemaining: storedTime } =
-    useSelector((state: RootState) => state.interview);
+  const {
+    currentCandidate,
+    currentQuestion,
+    isPaused,
+    timeRemaining: storedTime,
+  } = useSelector((state: RootState) => state.interview);
   const [currentAnswer, setCurrentAnswer] = useState('');
-  const [chatHistory, setChatHistory] = useState<Array<{ type: 'bot' | 'user'; message: string; timestamp: Date }>>([]);
+  const [chatHistory, setChatHistory] = useState<
+    Array<{ type: 'bot' | 'user'; message: string; timestamp: Date }>
+  >([]);
   const [timeoutTriggered, setTimeoutTriggered] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevQuestionId = useRef<string | null>(null);
@@ -28,9 +34,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
       const timeSpent = currentQuestion.timeLimit;
       onAnswerSubmit(currentAnswer || 'No answer provided', timeSpent);
       setCurrentAnswer('');
-      setChatHistory(prev => [
+      setChatHistory((prev) => [
         ...prev,
-        { type: 'user', message: currentAnswer || 'No answer provided', timestamp: new Date() }
+        { type: 'user', message: currentAnswer || 'No answer provided', timestamp: new Date() },
       ]);
       reset(currentQuestion.timeLimit); // Reset timer for next question
       setTimeoutTriggered(false);
@@ -46,7 +52,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
   const { timeRemaining, reset } = useTimer(
     initialTime,
     handleTimeout,
-    !isPaused && !!currentQuestion
+    !isPaused && !!currentQuestion,
   );
 
   useEffect(() => {
@@ -71,25 +77,23 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
           {
             type: 'bot',
             message: `**Question 1 (${currentQuestion.difficulty})**\n\n${currentQuestion.question}`,
-            timestamp: new Date()
-          }
+            timestamp: new Date(),
+          },
         ]);
       } else {
         // For subsequent questions, only add if not already present
-        setChatHistory(prev => {
-          const botMessages = prev.filter(m => m.type === 'bot');
-          const lastBotMsg = botMessages.length > 0 ? botMessages[botMessages.length - 1] : undefined;
-          if (
-            !lastBotMsg ||
-            !lastBotMsg.message.includes(currentQuestion.question)
-          ) {
+        setChatHistory((prev) => {
+          const botMessages = prev.filter((m) => m.type === 'bot');
+          const lastBotMsg =
+            botMessages.length > 0 ? botMessages[botMessages.length - 1] : undefined;
+          if (!lastBotMsg || !lastBotMsg.message.includes(currentQuestion.question)) {
             return [
               ...prev,
               {
                 type: 'bot',
                 message: `**Question ${(currentCandidate?.currentQuestionIndex || 0) + 1} (${currentQuestion.difficulty})**\n\n${currentQuestion.question}`,
-                timestamp: new Date()
-              }
+                timestamp: new Date(),
+              },
             ];
           }
           return prev;
@@ -106,14 +110,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
     e.preventDefault();
     if (currentAnswer.trim() && currentQuestion) {
       const timeSpent = currentQuestion.timeLimit - timeRemaining;
-      setChatHistory(prev => [...prev, {
-        type: 'user',
-        message: currentAnswer,
-        timestamp: new Date()
-      }]);
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          type: 'user',
+          message: currentAnswer,
+          timestamp: new Date(),
+        },
+      ]);
       onAnswerSubmit(currentAnswer, timeSpent);
       setCurrentAnswer('');
-      reset(currentQuestion.timeLimit); 
+      reset(currentQuestion.timeLimit);
     }
   };
 
@@ -135,7 +142,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
       dispatch({ type: 'interview/updateTimeRemaining', payload: timeRemaining });
     }
   }, [timeRemaining, currentQuestion, dispatch]);
-  
+
   return (
     <div className="bg-white rounded-lg shadow-lg flex flex-col h-[600px]">
       <div className="border-b border-gray-200 p-4 flex items-center justify-between">
@@ -164,34 +171,44 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit }) => {
             </div>
             <div className="bg-blue-50 rounded-lg p-3 max-w-md">
               <p className="text-sm text-gray-700">
-                Welcome to your Full Stack Developer interview! I'll be asking you 6 questions of increasing difficulty. 
-                Take your time to think through each answer, but remember there's a timer for each question.
+                Welcome to your Full Stack Developer interview! I'll be asking you 6 questions of
+                increasing difficulty. Take your time to think through each answer, but remember
+                there's a timer for each question.
               </p>
             </div>
           </div>
         )}
-        
+
         {chatHistory.map((message, index) => (
-          <div key={index} className={`flex items-start space-x-3 ${message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
-            <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
-              message.type === 'bot' ? 'bg-blue-100' : 'bg-gray-100'
-            }`}>
+          <div
+            key={index}
+            className={`flex items-start space-x-3 ${message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}
+          >
+            <div
+              className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                message.type === 'bot' ? 'bg-blue-100' : 'bg-gray-100'
+              }`}
+            >
               {message.type === 'bot' ? (
                 <Bot className="h-5 w-5 text-blue-600" />
               ) : (
                 <User className="h-5 w-5 text-gray-600" />
               )}
             </div>
-            <div className={`rounded-lg p-3 max-w-md ${
-              message.type === 'bot' ? 'bg-blue-50' : 'bg-gray-50'
-            }`}>
+            <div
+              className={`rounded-lg p-3 max-w-md ${
+                message.type === 'bot' ? 'bg-blue-50' : 'bg-gray-50'
+              }`}
+            >
               <div className="text-sm text-gray-700 whitespace-pre-wrap">
                 {message.message.includes('**') ? (
-                  <div dangerouslySetInnerHTML={{
-                    __html: message.message
-                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                      .replace(/\n/g, '<br>')
-                  }} />
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: message.message
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\n/g, '<br>'),
+                    }}
+                  />
                 ) : (
                   message.message
                 )}

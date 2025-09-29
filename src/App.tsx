@@ -10,8 +10,9 @@ import WelcomeBackModal from './components/WelcomeBackModal';
 const AppContent: React.FC = () => {
   const dispatch = useDispatch();
   const activeTab = useSelector((state: RootState) => state.ui.activeTab);
-  const { currentCandidate: currentApplicant, isInterviewActive } =
-    useSelector((state: RootState) => state.interview);
+  const { currentCandidate: currentApplicant, isInterviewActive } = useSelector(
+    (state: RootState) => state.interview,
+  );
 
   useEffect(() => {
     // Check for unfinished interview session on load
@@ -19,7 +20,7 @@ const AppContent: React.FC = () => {
       dispatch(setShowWelcomeBack(true));
     }
   }, [currentApplicant, isInterviewActive, dispatch]);
-  
+
   useEffect(() => {
     // Pause interview and show modal when user closes or reloads the page
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -48,11 +49,14 @@ const AppContent: React.FC = () => {
 function App() {
   return (
     <Provider store={store}>
-      <PersistGate loading={
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-          <div className="text-lg text-gray-600">Loading...</div>
-        </div>
-      } persistor={persistor}>
+      <PersistGate
+        loading={
+          <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+            <div className="text-lg text-gray-600">Loading...</div>
+          </div>
+        }
+        persistor={persistor}
+      >
         <AppContent />
       </PersistGate>
     </Provider>
