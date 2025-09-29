@@ -30,12 +30,18 @@ const IntervieweeTab: React.FC = () => {
   const [missingFields, setMissingFields] = useState<string[]>([]);
 
   useEffect(() => {
-    if (currentApplicant && currentApplicant.status === 'in-progress' && questions.length === 0) {
-      const generatedQuestions = aiService.generateQuestions();
-      setQuestions(generatedQuestions);
-      if (currentApplicant.currentQuestionIndex < generatedQuestions.length) {
-        dispatch(setCurrentQuestion(generatedQuestions[currentApplicant.currentQuestionIndex]));
-      }
+    if (
+      currentApplicant &&
+      currentApplicant.status === 'in-progress' &&
+      questions.length === 0 &&
+      currentApplicant.resumeText
+    ) {
+      aiService.generateQuestions(currentApplicant.resumeText).then((generatedQuestions) => {
+        setQuestions(generatedQuestions);
+        if (currentApplicant.currentQuestionIndex < generatedQuestions.length) {
+          dispatch(setCurrentQuestion(generatedQuestions[currentApplicant.currentQuestionIndex]));
+        }
+      });
     }
   }, [currentApplicant, dispatch, questions.length]);
 
@@ -85,19 +91,19 @@ const IntervieweeTab: React.FC = () => {
     }
   };
 
-  const startInterviewProcess = (candidate: Candidate) => {
-    const generatedQuestions = aiService.generateQuestions();
+  const startInterviewProcess = async (candidate: Candidate) => {
+    const generatedQuestions = await aiService.generateQuestions(candidate.resumeText || '');
     setQuestions(generatedQuestions);
     dispatch(updateCandidate({ id: candidate.id, status: 'in-progress' }));
     dispatch(setCurrentQuestion(generatedQuestions[0]));
     setStep('interview');
   };
 
-  const handleAnswerSubmit = (answer: string, timeSpent: number) => {
+  const handleAnswerSubmit = async (answer: string, timeSpent: number) => {
     if (!currentApplicant || !questions[currentApplicant.currentQuestionIndex]) return;
 
     const currentQuestion = questions[currentApplicant.currentQuestionIndex];
-    const { score, feedback } = aiService.scoreAnswer(currentQuestion, answer, timeSpent);
+    const { score, feedback } = await aiService.scoreAnswer(currentQuestion, answer, timeSpent);
 
     const answerData = {
       questionId: currentQuestion.id,
@@ -132,7 +138,7 @@ const IntervieweeTab: React.FC = () => {
     } else {
       // Complete interview
       const allAnswers = [...currentApplicant.answers, answerData];
-      const { score: finalScore, summary } = aiService.generateSummary(allAnswers);
+      const { score: finalScore, summary } = await aiService.generateSummary(allAnswers);
 
       dispatch(
         completeInterview({

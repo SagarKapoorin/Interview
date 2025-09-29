@@ -78,11 +78,9 @@ const InterviewProgress: React.FC = () => {
         <div className="mt-4 text-sm text-gray-600">
           <span className="font-medium">Current Score: </span>
           {Math.round(
-            (currentCandidate.answers.reduce((sum, answer) => sum + answer.score, 0) /
-              currentCandidate.answers.length) *
-              10,
-          )}
-          %
+            currentCandidate.answers.reduce((sum, answer) => sum + answer.score, 0) /
+              currentCandidate.answers.length,
+          )}%
         </div>
       )}
     </div>

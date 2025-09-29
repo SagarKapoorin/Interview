@@ -189,8 +189,14 @@ const InterviewerTab: React.FC = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className={`text-2xl font-bold ${getScoreColor(candidate.score)}`}>
-                      {candidate.score}%
+                    <div className={`text-2xl font-bold ${getScoreColor(Math.round(
+            candidate.answers.reduce((sum, answer) => sum + answer.score, 0) /
+              candidate.answers.length,
+          ))}`}>
+                       {Math.round(
+            candidate.answers.reduce((sum, answer) => sum + answer.score, 0) /
+              candidate.answers.length,
+          )}%
                     </div>
                     <div className="text-sm text-gray-500">
                       {candidate.answers.length}/6 questions
@@ -277,7 +283,18 @@ const CandidateDetailView: React.FC<CandidateDetailViewProps> = ({ candidate, on
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Performance Summary</h2>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <div className="text-3xl font-bold text-blue-600">{candidate.score}%</div>
+            {/* Compute display score: use summary score if available, else average of answers */}
+            {(() => {
+              const ansCount = candidate.answers.length;
+              let display = candidate.score;
+              if ((candidate.score ?? 0) <= 0 && ansCount > 0) {
+                const sum = candidate.answers.reduce((s, a) => s + a.score, 0);
+                display = Math.round(sum / ansCount);
+              }
+              return (
+                <div className="text-3xl font-bold text-blue-600">{display}%</div>
+              );
+            })()}
             <div className="text-sm text-gray-500">Overall Score</div>
           </div>
           <div className="text-right">
@@ -303,7 +320,7 @@ const CandidateDetailView: React.FC<CandidateDetailViewProps> = ({ candidate, on
                   Question {index + 1} ({answer.difficulty})
                 </h3>
                 <div className="flex items-center space-x-4 text-sm text-gray-500">
-                  <span>{Math.round((answer.score / 10) * 100)}%</span>
+                  <span>{answer.score}%</span>
                   <span>
                     {answer.timeSpent}s / {answer.timeLimit}s
                   </span>
