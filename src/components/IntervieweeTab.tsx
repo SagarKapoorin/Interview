@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { v4 as uuidv4 } from 'uuid';
 import { RootState } from '../store';
@@ -32,6 +32,16 @@ const IntervieweeTab: React.FC = () => {
   );
   // Step: upload profile, profile input, interview in progress, or completion summary
   const [step, setStep] = useState<'upload' | 'profile' | 'interview' | 'complete'>('upload');
+  // Sync local step with persisted candidate status
+  useEffect(() => {
+    if (candidateRecord) {
+      if (candidateRecord.status === 'in-progress') {
+        setStep('interview');
+      } else if (candidateRecord.status === 'completed') {
+        setStep('complete');
+      }
+    }
+  }, [candidateRecord]);
   const [isScoring, setIsScoring] = useState(false);
   const [questions, setLocalQuestions] = useState<Question[]>([]);
   const [missingFields, setMissingFields] = useState<string[]>([]);
