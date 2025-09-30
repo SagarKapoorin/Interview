@@ -45,6 +45,14 @@ const IntervieweeTab: React.FC = () => {
   const [isScoring, setIsScoring] = useState(false);
   const [questions, setLocalQuestions] = useState<Question[]>([]);
   const [missingFields, setMissingFields] = useState<string[]>([]);
+  // Reset to upload step when no active candidate (e.g., starting new session)
+  useEffect(() => {
+    if (!currentApplicant) {
+      setStep('upload');
+      setLocalQuestions([]);
+      setMissingFields([]);
+    }
+  }, [currentApplicant]);
 
 
   const handleResumeUpload = (data: {
