@@ -1,49 +1,58 @@
-/**
- * @file IntervieweeTab.tsx
- * @author
- *   Your Name
- * @date 2025-09-27
- * Hand-written by [Your Name], inspired by Bolt AI scaffolding.
- */
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { v4 as uuidv4 } from 'uuid';
 import { RootState } from '../store';
-import { addCandidate, updateCandidate, addAnswer, completeInterview } from '../store/slices/candidatesSlice';
-import { startInterview, setCurrentQuestion, endInterview, updateCurrentCandidate } from '../store/slices/interviewSlice';
+import {
+  addCandidate,
+  updateCandidate,
+  addAnswer,
+  completeInterview,
+} from '../store/slices/candidatesSlice';
+import {
+  startInterview,
+  setCurrentQuestion,
+  endInterview,
+  updateCurrentCandidate,
+  setQuestions as setInterviewQuestions,
+} from '../store/slices/interviewSlice';
 import { aiService } from '../services/aiService';
 import ResumeUpload from './ResumeUpload';
 import ChatInterface from './ChatInterface';
 import InterviewProgress from './InterviewProgress';
 import { Candidate, Question } from '../types';
 
-/**
- * IntervieweeTab presents the candidate-facing flow:
- *  - Resume upload
- *  - Profile completion
- *  - Live Q&A via chat interface
- */
 const IntervieweeTab: React.FC = () => {
   const dispatch = useDispatch();
-  // Alias currentCandidate to currentApplicant for clearer domain context
-  const { currentCandidate: currentApplicant, isInterviewActive } =
-    useSelector((state: RootState) => state.interview);
-  const [step, setStep] = useState<'upload' | 'profile' | 'interview'>('upload');
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [missingFields, setMissingFields] = useState<string[]>([]);
-
+  const { currentCandidate: currentApplicant, questions: reduxQuestions } = useSelector(
+    (state: RootState) => state.interview,
+  );
+  // Candidate record from global list for summary and answers
+  const candidateRecord = useSelector((state: RootState) =>
+    state.candidates.candidates.find((c) => c.id === currentApplicant?.id),
+  );
+  // Step: upload profile, profile input, interview in progress, or completion summary
+  const [step, setStep] = useState<'upload' | 'profile' | 'interview' | 'complete'>('upload');
+  // Sync local step with persisted candidate status
   useEffect(() => {
-    // FIXME: handle aiService errors gracefully
-    if (currentCandidate && currentCandidate.status === 'in-progress' && questions.length === 0) {
-      const generatedQuestions = aiService.generateQuestions();
-      setQuestions(generatedQuestions);
-      if (currentCandidate.currentQuestionIndex < generatedQuestions.length) {
-        dispatch(setCurrentQuestion(generatedQuestions[currentCandidate.currentQuestionIndex]));
+    if (candidateRecord) {
+      if (candidateRecord.status === 'in-progress') {
+        setStep('interview');
+      } else if (candidateRecord.status === 'completed') {
+        setStep('complete');
       }
     }
-  }, [currentCandidate, dispatch, questions.length]);
+  }, [candidateRecord]);
+  const [isScoring, setIsScoring] = useState(false);
+  const [questions, setLocalQuestions] = useState<Question[]>([]);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
 
-  const handleResumeUpload = (data: { name?: string; email?: string; phone?: string; text: string }) => {
+
+  const handleResumeUpload = (data: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    text: string;
+  }) => {
     const missing = [];
     if (!data.name) missing.push('name');
     if (!data.email) missing.push('email');
@@ -61,7 +70,7 @@ const IntervieweeTab: React.FC = () => {
       createdAt: new Date().toISOString(),
       currentQuestionIndex: 0,
       answers: [],
-      totalTimeSpent: 0
+      totalTimeSpent: 0,
     };
 
     dispatch(addCandidate(candidate));
@@ -76,27 +85,33 @@ const IntervieweeTab: React.FC = () => {
   };
 
   const handleProfileComplete = (profileData: { name: string; email: string; phone: string }) => {
-    if (currentCandidate) {
-      const updatedCandidate = { ...currentCandidate, ...profileData };
-      dispatch(updateCandidate({ id: currentCandidate.id, ...profileData }));
+    if (currentApplicant) {
+      const updatedCandidate = { ...currentApplicant, ...profileData };
+      dispatch(updateCandidate({ id: currentApplicant.id, ...profileData }));
       dispatch(updateCurrentCandidate(profileData));
       startInterviewProcess(updatedCandidate);
     }
   };
 
-  const startInterviewProcess = (candidate: Candidate) => {
-    const generatedQuestions = aiService.generateQuestions();
-    setQuestions(generatedQuestions);
+  const startInterviewProcess = async (candidate: Candidate) => {
+    const generatedQuestions = await aiService.generateQuestions(candidate.resumeText || '');
+    // Store questions both in Redux and local state
+    setLocalQuestions(generatedQuestions);
+    dispatch(setInterviewQuestions(generatedQuestions));
     dispatch(updateCandidate({ id: candidate.id, status: 'in-progress' }));
     dispatch(setCurrentQuestion(generatedQuestions[0]));
     setStep('interview');
   };
 
-  const handleAnswerSubmit = (answer: string, timeSpent: number) => {
-    if (!currentCandidate || !questions[currentCandidate.currentQuestionIndex]) return;
+  const handleAnswerSubmit = async (answer: string, timeSpent: number) => {
+    // Determine current question list: local or from Redux
+    const questionList = questions.length > 0 ? questions : reduxQuestions;
+    if (!currentApplicant || !questionList[currentApplicant.currentQuestionIndex]) return;
+    setIsScoring(true);
 
-    const currentQuestion = questions[currentCandidate.currentQuestionIndex];
-    const { score, feedback } = aiService.scoreAnswer(currentQuestion, answer, timeSpent);
+    const currentQuestion = questionList[currentApplicant.currentQuestionIndex];
+    const { score, feedback } = await aiService.scoreAnswer(currentQuestion, answer, timeSpent);
+    setIsScoring(false);
 
     const answerData = {
       questionId: currentQuestion.id,
@@ -106,41 +121,71 @@ const IntervieweeTab: React.FC = () => {
       timeLimit: currentQuestion.timeLimit,
       timeSpent,
       score,
-      feedback
+      feedback,
     };
 
-    dispatch(addAnswer({ candidateId: currentCandidate.id, answer: answerData }));
+    dispatch(addAnswer({ candidateId: currentApplicant.id, answer: answerData }));
 
-    const nextQuestionIndex = currentCandidate.currentQuestionIndex + 1;
-    
-    if (nextQuestionIndex < questions.length) {
-      // Move to next question
-      dispatch(updateCandidate({ 
-        id: currentCandidate.id, 
-        currentQuestionIndex: nextQuestionIndex,
-        totalTimeSpent: currentCandidate.totalTimeSpent + timeSpent
-      }));
-      dispatch(updateCurrentCandidate({ 
-        currentQuestionIndex: nextQuestionIndex,
-        totalTimeSpent: currentCandidate.totalTimeSpent + timeSpent
-      }));
-      dispatch(setCurrentQuestion(questions[nextQuestionIndex]));
+    const nextQuestionIndex = currentApplicant.currentQuestionIndex + 1;
+
+    // Move to next question if available
+    if (nextQuestionIndex < questionList.length) {
+      const updatedTotalTime = currentApplicant.totalTimeSpent + timeSpent;
+      const updatedAnswers = [...currentApplicant.answers, answerData];
+      dispatch(
+        updateCandidate({
+          id: currentApplicant.id,
+          currentQuestionIndex: nextQuestionIndex,
+          totalTimeSpent: updatedTotalTime,
+        }),
+      );
+      dispatch(
+        updateCurrentCandidate({
+          currentQuestionIndex: nextQuestionIndex,
+          totalTimeSpent: updatedTotalTime,
+          answers: updatedAnswers,
+        }),
+      );
+      dispatch(setCurrentQuestion(questionList[nextQuestionIndex]));
     } else {
-      // Complete interview
-      const allAnswers = [...currentCandidate.answers, answerData];
-      const { score: finalScore, summary } = aiService.generateSummary(allAnswers);
-      
-      dispatch(completeInterview({ 
-        candidateId: currentCandidate.id, 
-        score: finalScore, 
-        summary 
-      }));
-      dispatch(endInterview());
-      setStep('upload');
-      setQuestions([]);
+      // Complete interview and prepare summary view
+      const allAnswers = [...currentApplicant.answers, answerData];
+      const { score: finalScore, summary } = await aiService.generateSummary(allAnswers);
+      dispatch(
+        completeInterview({ candidateId: currentApplicant.id, score: finalScore, summary }),
+      );
+      setStep('complete');
     }
   };
 
+  // Show completion summary once interview is complete
+  if (step === 'complete' && currentApplicant) {
+    // Use stored candidateRecord from Redux for summary and answers
+    const score = candidateRecord?.score ?? 0;
+    const summary = candidateRecord?.summary || '';
+    return (
+      <div className="max-w-4xl mx-auto py-8 px-4 bg-white rounded-lg shadow-md">
+        <h2 className="text-2xl font-bold mb-4">Interview Complete!</h2>
+        <div className="text-xl mb-2">Final Score: {score}%</div>
+        {summary && (
+          <div className="bg-gray-50 p-4 rounded-lg mb-4">
+            <h3 className="font-semibold mb-2">AI Summary</h3>
+            <p className="whitespace-pre-wrap text-gray-700">{summary}</p>
+          </div>
+        )}
+        <button
+          onClick={() => {
+            dispatch(endInterview());
+            setLocalQuestions([]);
+            setStep('upload');
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
+          Done
+        </button>
+      </div>
+    );
+  }
   if (step === 'upload') {
     return (
       <div className="max-w-4xl mx-auto py-8 px-4">
@@ -165,7 +210,7 @@ const IntervieweeTab: React.FC = () => {
           </p>
           <ProfileForm
             missingFields={missingFields}
-            initialData={currentCandidate!}
+            initialData={currentApplicant!}
             onComplete={handleProfileComplete}
           />
         </div>
@@ -177,9 +222,7 @@ const IntervieweeTab: React.FC = () => {
     <div className="max-w-4xl mx-auto py-4 px-4">
       <InterviewProgress />
       <div className="mt-6">
-        <ChatInterface
-          onAnswerSubmit={handleAnswerSubmit}
-        />
+        <ChatInterface onAnswerSubmit={handleAnswerSubmit} loading={isScoring} />
       </div>
     </div>
   );
@@ -195,12 +238,38 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ missingFields, initialData, o
   const [formData, setFormData] = useState({
     name: initialData.name || '',
     email: initialData.email || '',
-    phone: initialData.phone || ''
+    phone: initialData.phone || '',
   });
+  const [errors, setErrors] = useState<{ name?: string; email?: string; phone?: string }>({});
+
+  const validate = () => {
+    const newErrors: typeof errors = {};
+    if (missingFields.includes('name') && !formData.name.trim()) {
+      newErrors.name = 'Name is required.';
+    }
+    if (missingFields.includes('email')) {
+      if (!formData.email.trim()) {
+        newErrors.email = 'Email is required.';
+      } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/.test(formData.email)) {
+        newErrors.email = 'Invalid email format.';
+      }
+    }
+    if (missingFields.includes('phone')) {
+      if (!formData.phone.trim()) {
+        newErrors.phone = 'Phone number is required.';
+      } else if (!/^\+?\d{10,15}$/.test(formData.phone.replace(/\D/g, ''))) {
+        newErrors.phone = 'Invalid phone number format.';
+      }
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onComplete(formData);
+    if (validate()) {
+      onComplete(formData);
+    }
   };
 
   return (
@@ -213,8 +282,9 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ missingFields, initialData, o
             required
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className={`w-full px-3 py-2 border ${errors.name ? 'border-red-400' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
           />
+          {errors.name && <div className="text-xs text-red-600 mt-1">{errors.name}</div>}
         </div>
       )}
       {missingFields.includes('email') && (
@@ -225,8 +295,9 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ missingFields, initialData, o
             required
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className={`w-full px-3 py-2 border ${errors.email ? 'border-red-400' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
           />
+          {errors.email && <div className="text-xs text-red-600 mt-1">{errors.email}</div>}
         </div>
       )}
       {missingFields.includes('phone') && (
@@ -237,8 +308,9 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ missingFields, initialData, o
             required
             value={formData.phone}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className={`w-full px-3 py-2 border ${errors.phone ? 'border-red-400' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
           />
+          {errors.phone && <div className="text-xs text-red-600 mt-1">{errors.phone}</div>}
         </div>
       )}
       <button

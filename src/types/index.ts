@@ -40,6 +40,7 @@ export interface InterviewState {
   isPaused: boolean;
   currentQuestion: Question | null;
   timeRemaining: number;
+  questions: Question[];
   showWelcomeBack: boolean;
 }
 

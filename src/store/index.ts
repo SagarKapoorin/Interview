@@ -9,13 +9,13 @@ import uiSlice from './slices/uiSlice';
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['candidates', 'interview']
+  whitelist: ['candidates', 'interview'],
 };
 
 const rootReducer = combineReducers({
   candidates: candidatesSlice,
   interview: interviewSlice,
-  ui: uiSlice
+  ui: uiSlice,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -26,9 +26,9 @@ export const store = configureStore({
     getDefaultMiddleware({
       serializableCheck: {
         ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
-        ignoredPaths: ['interview.currentCandidate.resumeFile']
-      }
-    })
+        ignoredPaths: ['interview.currentCandidate.resumeFile'],
+      },
+    }),
 });
 
 export const persistor = persistStore(store);

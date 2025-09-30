@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
+import React, { useCallback, useState } from 'react';
+import { useDropzone, FileRejection } from 'react-dropzone';
 import { Upload, FileText, AlertCircle } from 'lucide-react';
 import { resumeParser } from '../services/resumeParser';
 
@@ -8,31 +8,76 @@ interface ResumeUploadProps {
 }
 
 const ResumeUpload: React.FC<ResumeUploadProps> = ({ onFileUploaded }) => {
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (file) {
-      try {
-        const parsedData = await resumeParser.parseFile(file);
-        onFileUploaded(parsedData);
-      } catch (error) {
-        console.error('Error parsing resume:', error);
+  const [error, setError] = useState<string | null>(null);
+  const [isParsing, setIsParsing] = useState(false);
+
+  const onDrop = useCallback(
+    async (acceptedFiles: File[], fileRejections: FileRejection[]) => {
+      setError(null);
+      if (fileRejections.length > 0) {
+        const rejection = fileRejections[0];
+        if (rejection.errors && rejection.errors.length > 0) {
+          setError(rejection.errors[0].message);
+        } else {
+          setError('File rejected. Please check the file type and size.');
+        }
+        return;
       }
-    }
-  }, [onFileUploaded]);
+      const file = acceptedFiles[0];
+      if (file) {
+        setIsParsing(true);
+        try {
+          const parsedData = await resumeParser.parseFile(file);
+          if (!parsedData.text || parsedData.text.trim().length === 0) {
+            setError('Failed to extract text from the resume. Please try another file.');
+            return;
+          }
+          onFileUploaded(parsedData);
+        } catch (err: unknown) {
+          if (
+            err &&
+            typeof err === 'object' &&
+            'name' in (err as Record<string, unknown>) &&
+            (err as { name?: string }).name === 'NotReadableError'
+          ) {
+            setError('Could not read the file. Please check your file and try again.');
+          } else {
+            setError('Resume parsing failed. Please upload a valid PDF or DOCX file.');
+          }
+          console.error('Error parsing resume:', err);
+        }
+      }
+    },
+    [onFileUploaded],
+  );
 
   const { getRootProps, getInputProps, isDragActive, fileRejections } = useDropzone({
     onDrop,
     accept: {
       'application/pdf': ['.pdf'],
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-      'application/msword': ['.doc']
+      'application/msword': ['.doc'],
     },
     maxFiles: 1,
-    maxSize: 10 * 1024 * 1024 // 10MB
+    maxSize: 10 * 1024 * 1024, // 10MB
   });
+  // If parsing is in progress, show a loader
+  if (isParsing) {
+    return (
+      <div className="max-w-md mx-auto py-8 text-center">
+        <div className="text-lg text-gray-600">Parsing resume, please wait...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-md mx-auto">
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center">
+          <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
+          <div className="text-sm text-red-700">{error}</div>
+        </div>
+      )}
       <div
         {...getRootProps()}
         className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
@@ -52,21 +97,14 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({ onFileUploaded }) => {
         <p className="text-lg font-medium text-gray-900 mb-2">
           {isDragActive ? 'Drop your resume here' : 'Upload your resume'}
         </p>
-        <p className="text-sm text-gray-500 mb-4">
-          Drag and drop your resume, or click to browse
-        </p>
-        <p className="text-xs text-gray-400">
-          Supports PDF and DOCX files up to 10MB
-        </p>
+        <p className="text-sm text-gray-500 mb-4">Drag and drop your resume, or click to browse</p>
+        <p className="text-xs text-gray-400">Supports PDF and DOCX files up to 10MB</p>
       </div>
-      
-      {fileRejections.length > 0 && (
+      {fileRejections.length > 0 && !error && (
         <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
           <div className="flex">
             <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
-            <div className="text-sm text-red-700">
-              {fileRejections[0].errors[0].message}
-            </div>
+            <div className="text-sm text-red-700">{fileRejections[0].errors[0].message}</div>
           </div>
         </div>
       )}

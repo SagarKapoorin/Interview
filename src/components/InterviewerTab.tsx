@@ -1,20 +1,25 @@
-/**
- * @file InterviewerTab.tsx
- * @author
- *   Your Name
- * @date 2025-09-27
- * Hand-written by [Your Name], inspired by Bolt AI scaffolding.
- */
-import React, { useState } from 'react';
+import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Search, Import as SortAsc, Dessert as SortDesc, ArrowLeft, Trophy, Calendar, Phone, Mail, Clock } from 'lucide-react';
+import {
+  Search,
+  Import as SortAsc,
+  Dessert as SortDesc,
+  ArrowLeft,
+  Trophy,
+  Calendar,
+  Phone,
+  Mail,
+  Clock,
+} from 'lucide-react';
 import { RootState } from '../store';
-import { setSelectedCandidate, setSearchTerm, setSortBy, setSortOrder } from '../store/slices/uiSlice';
+import {
+  setSelectedCandidate,
+  setSearchTerm,
+  setSortBy,
+  setSortOrder,
+} from '../store/slices/uiSlice';
 import { Candidate } from '../types';
 
-/**
- * Maps candidate status to corresponding color utility classes.
- */
 const getStatusColor = (status: Candidate['status']) => {
   switch (status) {
     case 'completed':
@@ -28,22 +33,20 @@ const getStatusColor = (status: Candidate['status']) => {
   }
 };
 
-/**
- * InterviewerTab presents the recruiter-facing dashboard:
- *  - Search, sort, and select candidates
- *  - View candidate status and details
- */
 const InterviewerTab: React.FC = () => {
   const dispatch = useDispatch();
   const candidates = useSelector((state: RootState) => state.candidates.candidates);
-  const { selectedCandidateId, searchTerm, sortBy, sortOrder } = useSelector((state: RootState) => state.ui);
+  const { selectedCandidateId, searchTerm, sortBy, sortOrder } = useSelector(
+    (state: RootState) => state.ui,
+  );
 
-  const selectedCandidate = candidates.find(c => c.id === selectedCandidateId);
+  const selectedCandidate = candidates.find((c) => c.id === selectedCandidateId);
 
   // Filter and sort candidates
-  const filteredCandidates = candidates.filter(candidate =>
-    candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    candidate.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredCandidates = candidates.filter(
+    (candidate) =>
+      candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      candidate.email.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const sortedCandidates = [...filteredCandidates].sort((a, b) => {
@@ -79,22 +82,28 @@ const InterviewerTab: React.FC = () => {
   };
 
   if (selectedCandidate) {
-    return <CandidateDetailView candidate={selectedCandidate} onBack={() => dispatch(setSelectedCandidate(null))} />;
+    return (
+      <CandidateDetailView
+        candidate={selectedCandidate}
+        onBack={() => dispatch(setSelectedCandidate(null))}
+      />
+    );
   }
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-4">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Interview Dashboard</h1>
         <p className="text-gray-600">Manage and review candidate interviews</p>
       </div>
 
-      {/* Search and Filters */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 lg:space-x-4">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={20}
+            />
             <input
               type="text"
               placeholder="Search candidates..."
@@ -104,19 +113,38 @@ const InterviewerTab: React.FC = () => {
             />
           </div>
           <div className="flex space-x-2">
-            <SortButton label="Score" field="score" active={sortBy === 'score'} order={sortOrder} onClick={handleSortClick} />
-            <SortButton label="Name" field="name" active={sortBy === 'name'} order={sortOrder} onClick={handleSortClick} />
-            <SortButton label="Date" field="date" active={sortBy === 'date'} order={sortOrder} onClick={handleSortClick} />
+            <SortButton
+              label="Score"
+              field="score"
+              active={sortBy === 'score'}
+              order={sortOrder}
+              onClick={handleSortClick}
+            />
+            <SortButton
+              label="Name"
+              field="name"
+              active={sortBy === 'name'}
+              order={sortOrder}
+              onClick={handleSortClick}
+            />
+            <SortButton
+              label="Date"
+              field="date"
+              active={sortBy === 'date'}
+              order={sortOrder}
+              onClick={handleSortClick}
+            />
           </div>
         </div>
       </div>
 
-      {/* Candidates List */}
       {sortedCandidates.length === 0 ? (
         <div className="bg-white rounded-lg shadow-md p-12 text-center">
           <Trophy className="mx-auto h-12 w-12 text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No candidates yet</h3>
-          <p className="text-gray-500">Candidates will appear here after they complete their interviews.</p>
+          <p className="text-gray-500">
+            Candidates will appear here after they complete their interviews.
+          </p>
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -131,14 +159,16 @@ const InterviewerTab: React.FC = () => {
                   <div className="flex-1">
                     <div className="flex items-center space-x-4 mb-3">
                       <h3 className="text-lg font-semibold text-gray-900">{candidate.name}</h3>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getStatusColor(candidate.status)}`}>
+                      <span
+                        className={`px-2 py-1 rounded-full whitespace-nowrap text-xs font-medium capitalize ${getStatusColor(candidate.status)}`}
+                      >
                         {candidate.status}
                       </span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center whitespace-nowrap space-x-2">
                         <Mail size={14} />
-                        <span>{candidate.email}</span>
+                        <span className='text-xs'> {candidate.email}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Phone size={14} />
@@ -151,15 +181,25 @@ const InterviewerTab: React.FC = () => {
                       {candidate.status === 'completed' && candidate.completedAt && (
                         <div className="flex items-center space-x-2">
                           <Clock size={14} />
-                          <span>Completed {new Date(candidate.completedAt).toLocaleDateString()}</span>
+                          <span>
+                            Completed {new Date(candidate.completedAt).toLocaleDateString()}
+                          </span>
                         </div>
                       )}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className={`text-2xl font-bold ${getScoreColor(candidate.score)}`}>
-                      {candidate.score}%
-                    </div>
+                  {(() => {
+                    const count = candidate.answers.length;
+                    const avg = count > 0
+                      ? Math.round(
+                          candidate.answers.reduce((sum, a) => sum + a.score, 0) / count
+                        )
+                      : 0;
+                    return (
+                      <div className={`text-2xl font-bold ${getScoreColor(avg)}`}>{avg}%</div>
+                    );
+                  })()}
                     <div className="text-sm text-gray-500">
                       {candidate.answers.length}/6 questions
                     </div>
@@ -186,9 +226,7 @@ const SortButton: React.FC<SortButtonProps> = ({ label, field, active, order, on
   <button
     onClick={() => onClick(field)}
     className={`flex items-center space-x-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-      active
-        ? 'bg-blue-100 text-blue-700'
-        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+      active ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
     }`}
   >
     <span>{label}</span>
@@ -204,7 +242,6 @@ interface CandidateDetailViewProps {
 const CandidateDetailView: React.FC<CandidateDetailViewProps> = ({ candidate, onBack }) => {
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
-      {/* Header */}
       <div className="flex items-center space-x-4 mb-6">
         <button
           onClick={onBack}
@@ -218,7 +255,6 @@ const CandidateDetailView: React.FC<CandidateDetailViewProps> = ({ candidate, on
         </div>
       </div>
 
-      {/* Candidate Info */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Candidate Information</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -236,19 +272,31 @@ const CandidateDetailView: React.FC<CandidateDetailViewProps> = ({ candidate, on
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-500 mb-1">Status</label>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getStatusColor(candidate.status)}`}>
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getStatusColor(candidate.status)}`}
+            >
               {candidate.status}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Score Summary */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Performance Summary</h2>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <div className="text-3xl font-bold text-blue-600">{candidate.score}%</div>
+            {/* Compute display score: use summary score if available, else average of answers */}
+            {(() => {
+              const ansCount = candidate.answers.length;
+              let display = candidate.score;
+              if ((candidate.score ?? 0) <= 0 && ansCount > 0) {
+                const sum = candidate.answers.reduce((s, a) => s + a.score, 0);
+                display = Math.round(sum / ansCount);
+              }
+              return (
+                <div className="text-3xl font-bold text-blue-600">{display}%</div>
+              );
+            })()}
             <div className="text-sm text-gray-500">Overall Score</div>
           </div>
           <div className="text-right">
@@ -264,7 +312,6 @@ const CandidateDetailView: React.FC<CandidateDetailViewProps> = ({ candidate, on
         )}
       </div>
 
-      {/* Questions and Answers */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Questions & Answers</h2>
         <div className="space-y-6">
@@ -275,8 +322,10 @@ const CandidateDetailView: React.FC<CandidateDetailViewProps> = ({ candidate, on
                   Question {index + 1} ({answer.difficulty})
                 </h3>
                 <div className="flex items-center space-x-4 text-sm text-gray-500">
-                  <span>{Math.round((answer.score / 10) * 100)}%</span>
-                  <span>{answer.timeSpent}s / {answer.timeLimit}s</span>
+                  <span>{answer.score}%</span>
+                  <span>
+                    {answer.timeSpent}s / {answer.timeLimit}s
+                  </span>
                 </div>
               </div>
               <p className="text-gray-700 mb-3">{answer.question}</p>
