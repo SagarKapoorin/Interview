@@ -4,34 +4,25 @@ export const useTimer = (initialTime: number, onTimeout: () => void, isActive: b
   const [timeRemaining, setTimeRemaining] = useState(initialTime);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    setTimeRemaining(initialTime);
-  }, [initialTime]);
 
   useEffect(() => {
-    if (isActive && timeRemaining > 0) {
-      intervalRef.current = setInterval(() => {
-        setTimeRemaining((prev) => {
-          if (prev <= 1) {
-            onTimeout();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+    if (!isActive) {
+      return;
     }
-
+    const timer = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          onTimeout();
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      clearInterval(timer);
     };
-  }, [isActive, timeRemaining, onTimeout]);
+  }, [isActive, onTimeout]);
 
   const reset = useCallback(
     (newTime?: number) => {
