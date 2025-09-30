@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Send, Clock, Bot, User } from 'lucide-react';
 import { RootState } from '../store';
@@ -16,7 +16,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit, loading =
     currentCandidate,
     currentQuestion,
     isPaused,
-    timeRemaining: storedTime,
   } = useSelector((state: RootState) => state.interview);
   const [currentAnswer, setCurrentAnswer] = useState('');
   const [chatHistory, setChatHistory] = useState<
@@ -26,9 +25,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit, loading =
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevQuestionId = useRef<string | null>(null);
 
-  const handleTimeout = () => {
+  const handleTimeout = useCallback(() => {
     setTimeoutTriggered(true);
-  };
+  }, []);
 
   useEffect(() => {
     if (timeoutTriggered && currentQuestion) {
@@ -45,11 +44,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit, loading =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeoutTriggered]);
 
-  const initialTime = currentQuestion
-    ? storedTime > 0
-      ? storedTime
-      : currentQuestion.timeLimit
-    : 0;
+  // Initialize timer to the current question's time limit
+  const initialTime = currentQuestion ? currentQuestion.timeLimit : 0;
   // Pause the timer while waiting for answer scoring
   const { timeRemaining, reset } = useTimer(
     initialTime,
@@ -136,11 +132,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onAnswerSubmit, loading =
     return 'text-green-500';
   };
 
-  useEffect(() => {
-    if (currentQuestion) {
-      dispatch({ type: 'interview/updateTimeRemaining', payload: timeRemaining });
-    }
-  }, [timeRemaining, currentQuestion, dispatch]);
 
   return (
     <div className="bg-white rounded-lg shadow-lg flex flex-col h-[600px]">
